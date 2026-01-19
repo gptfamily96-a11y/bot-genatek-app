@@ -42,6 +42,11 @@ async function sendList(to, bodyText, rows) {
   });
 }
 
+const welcomeMenuText =
+`لا تتردد في أي سؤال يخطر على بالك،
+وتقدر تتعرّف علينا أكثر
+من خلال القوائم التالية:`;
+
 const mainMenu = [
   { id: "about", title: "من نحن – جيناتك" },
   { id: "what", title: "ما هو التحليل الجيني؟" },
@@ -51,6 +56,12 @@ const mainMenu = [
   { id: "packages", title: "تعرّف على الباقات" },
   { id: "start", title: "ابدأ الآن / تحدث معنا" },
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
+];
+
+const aboutMenu = [
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "steps", title: "خطوات رحلتك معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
 app.get("/", (req, res) => {
@@ -76,13 +87,7 @@ app.post("/webhook", async (req, res) => {
 عشان يشوفك بأتم صحة وعافية 💙`
     );
 
-    await sendList(
-      to,
-`لا تتردد في أي سؤال يخطر على بالك،
-وتقدر تتعرّف علينا أكثر
-من خلال القوائم التالية:`,
-      mainMenu
-    );
+    await sendList(to, welcomeMenuText, mainMenu);
     return;
   }
 
@@ -125,6 +130,13 @@ app.post("/webhook", async (req, res) => {
 هي تجربة صحية متكاملة
 باحترافية عالية وخصوصية تامة.`
       );
+
+      await sendList(to, "تقدر تكمل من الخيارات التالية:", aboutMenu);
+      return;
+    }
+
+    if (id === "main_menu") {
+      await sendList(to, welcomeMenuText, mainMenu);
       return;
     }
 
