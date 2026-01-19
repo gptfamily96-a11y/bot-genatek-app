@@ -17,14 +17,39 @@ async function send(payload) {
   });
 }
 
+async function sendText(to, body) {
+  await send({
+    messaging_product: "whatsapp",
+    to,
+    type: "text",
+    text: { body }
+  });
+}
+
+async function sendList(to, bodyText, rows) {
+  await send({
+    messaging_product: "whatsapp",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: { text: bodyText },
+      action: {
+        button: "اختر من القائمة",
+        sections: [{ rows }]
+      }
+    }
+  });
+}
+
 const mainMenu = [
   { id: "about", title: "من نحن – جيناتك" },
   { id: "what", title: "ما هو التحليل الجيني؟" },
-  { id: "why", title: "لماذا تحتاج التحليل الجيني؟" },
+  { id: "why", title: "لماذا تحتاج التحليل؟" },
   { id: "steps", title: "خطوات رحلتك معنا" },
-  { id: "after", title: "ماذا بعد ظهور النتائج؟" },
+  { id: "after", title: "ماذا بعد النتائج" },
   { id: "packages", title: "تعرّف على الباقات" },
-  { id: "start", title: "ابدأ الآن / تحدث مع مختص" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
@@ -41,51 +66,34 @@ app.post("/webhook", async (req, res) => {
   const to = msg.from;
 
   if (msg.type === "text") {
-    await send({
-      messaging_product: "whatsapp",
+    await sendText(
       to,
-      type: "text",
-      text: { body: "أهلاً بك 👋" }
-    });
+`أهلاً بك في جيناتك 🌱
+مستعد تتعرّف على جسمك لأول مرة؟ ✨
 
-    await send({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: "اختر من القائمة التالية:" }
-    });
+جيناتك يعرف حيرتك مع دوامة الأعراض،
+وفريقنا الطبي المتخصص موجود
+عشان يشوفك بأتم صحة وعافية 💙`
+    );
 
-    await send({
-      messaging_product: "whatsapp",
+    await sendText(
       to,
-      type: "interactive",
-      interactive: {
-        type: "list",
-        body: { text: "القائمة الرئيسية" },
-        action: {
-          button: "اختر",
-          sections: [
-            {
-              rows: mainMenu
-            }
-          ]
-        }
-      }
-    });
+`لا تتردد في أي سؤال يخطر على بالك،
+وتقدر تتعرّف علينا أكثر
+من خلال القوائم التالية:`
+    );
+
+    await sendList(to, "اختر من القائمة:", mainMenu);
+    return;
   }
 
   if (msg.type === "interactive") {
-    const id = msg.interactive.list_reply.id;
+    const id = msg.interactive?.list_reply?.id;
     const selected = mainMenu.find(r => r.id === id);
+    if (!selected) return;
 
-    if (selected) {
-      await send({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: { body: selected.title }
-      });
-    }
+    await sendText(to, selected.title);
+    return;
   }
 });
 
