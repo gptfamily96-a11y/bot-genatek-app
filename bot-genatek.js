@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -25,7 +24,7 @@ app.post("/webhook", async (req, res) => {
       messaging_product: "whatsapp",
       to,
       type: "text",
-      text: { body: "تم الاستلام ✅" }
+      text: { body: "السيرفر شغال ✅" }
     })
   });
 });
