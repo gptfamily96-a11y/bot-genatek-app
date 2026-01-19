@@ -1,6 +1,5 @@
 const express = require("express");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -8,49 +7,14 @@ app.use(express.json());
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function sendText(to, body) {
-  await fetch(API_URL, {
+function send(payload) {
+  return fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "D360-API-KEY": API_KEY
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body }
-    })
-  });
-}
-
-async function sendList(to, bodyText, rows) {
-  await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "D360-API-KEY": API_KEY
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "interactive",
-      interactive: {
-        type: "list",
-        body: { text: bodyText },
-        action: {
-          button: "اختر من القائمة",
-          sections: [
-            {
-              title: "القائمة",
-              rows
-            }
-          ]
-        }
-      }
-    })
+    body: JSON.stringify(payload)
   });
 }
 
@@ -66,22 +30,97 @@ const mainMenu = [
 ];
 
 app.post("/webhook", (req, res) => {
-  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-  if (!message) return res.sendStatus(200);
+  const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!msg) return res.sendStatus(200);
 
-  const from = message.from;
+  const to = msg.from;
   res.sendStatus(200);
 
-  (async () => {
-    if (message.type === "text") {
-      await sendList(
-        from,
-        "اختر من القائمة:",
-        mainMenu
-      );
+  if (msg.type === "text") {
+    send({
+      messaging_product: "whatsapp",
+      to,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        body: { text: "اختر من القائمة:" },
+        action: {
+          button: "اختر من القائمة",
+          sections: [{ rows: mainMenu }]
+        }
+      }
+    });
 
-      await sleep(1500);
-
-      await sendText(from,
+    send({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: {
+        body:
 `أهلاً بك في جيناتك 🌱
-مستعد تتعرّف على جسمك لأول
+مستعد تتعرّف على جسمك لأول مرة؟ ✨
+
+جيناتك يعرف حيرتك مع دوامة الأعراض
+ورحلة التشخيص الطويلة،
+فريقنا الطبي موجود
+عشان نشوفك بأتم صحة وعافية`
+      }
+    });
+  }
+
+  if (msg.type === "interactive") {
+    const id = msg.interactive.list_reply.id;
+
+    if (id === "about_genatek") {
+      send({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: {
+          body:
+`جيناتك من أوائل العلامات السعودية المتخصصة في مجال الطب الجيني،
+تعمل تحت إشراف كادر طبي متميز،
+وتقدّم تحاليل DNA تساعدك تفهم صحتك من الجذور.`
+        }
+      });
+
+      send({
+        messaging_product: "whatsapp",
+        to,
+        type: "interactive",
+        interactive: {
+          type: "list",
+          body: { text: "تقدر تكمل من الخيارات التالية:" },
+          action: {
+            button: "اختر من القائمة",
+            sections: [{
+              rows: [
+                { id: "packages", title: "تعرّف على الباقات" },
+                { id: "journey_steps", title: "خطوات رحلتك معنا" },
+                { id: "main_menu", title: "العودة للقائمة الرئيسية" }
+              ]
+            }]
+          }
+        }
+      });
+    }
+
+    if (id === "main_menu") {
+      send({
+        messaging_product: "whatsapp",
+        to,
+        type: "interactive",
+        interactive: {
+          type: "list",
+          body: { text: "اختر من القائمة:" },
+          action: {
+            button: "اختر من القائمة",
+            sections: [{ rows: mainMenu }]
+          }
+        }
+      });
+    }
+  }
+});
+
+app.listen(process.env.PORT || 3000);
