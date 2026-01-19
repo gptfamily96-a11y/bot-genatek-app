@@ -88,11 +88,50 @@ app.post("/webhook", async (req, res) => {
 
   if (msg.type === "interactive") {
     const id = msg.interactive?.list_reply?.id;
-    const selected = mainMenu.find(r => r.id === id);
-    if (!selected) return;
 
-    await sendText(to, selected.title);
-    return;
+    if (id === "about") {
+      await sendText(
+        to,
+`جيناتك من أوائل العلامات السعودية المتخصصة في مجال الطب الجيني،
+وتعمل تحت إشراف كادر طبي متميز.
+
+نقدّم مجموعة من التحاليل الجينية (DNA)
+تساعدك على فهم صحتك من الجذور
+وإنهاء رحلة التشخيص الطويلة.`
+      );
+
+      await sendText(
+        to,
+`ولأن راحتك أولوية، نجيك لين البيت!
+
+تبدأ رحلتك معنا من المنزل؛
+مندوبنا يجيك لاستلام العينة،
+ونرسل لك النتائج لين عندك.
+
+كما نقدّم لك جلسة استشارية خاصة
+مع فريقنا الطبي المتخصص
+لشرح النتائج وبناء قراراتك الصحية.`
+      );
+
+      await sendText(
+        to,
+`ولسى ما انتهت الرحلة!
+
+نوفر لك منتجات مصمّمة خصيصًا
+حسب طبيعة جيناتك لتحقيق أفضل استجابة
+وبخيار شراء مباشر.
+
+جيناتك مو مجرد فحص،
+هي تجربة صحية متكاملة
+باحترافية عالية وخصوصية تامة.`
+      );
+      return;
+    }
+
+    const selected = mainMenu.find(r => r.id === id);
+    if (selected) {
+      await sendText(to, selected.title);
+    }
   }
 });
 
