@@ -7,120 +7,31 @@ app.use(express.json());
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
-function send(payload) {
-  return fetch(API_URL, {
+app.post("/webhook", async (req, res) => {
+  res.sendStatus(200);
+
+  const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!msg) return;
+
+  const to = msg.from;
+
+  await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "D360-API-KEY": API_KEY
     },
-    body: JSON.stringify(payload)
-  });
-}
-
-const mainMenu = [
-  { id: "about_genatek", title: "من نحن – جيناتك" },
-  { id: "what_test", title: "ما هو التحليل الجيني؟" },
-  { id: "why_test", title: "لماذا تحتاج التحليل الجيني؟" },
-  { id: "journey_steps", title: "خطوات رحلتك معنا" },
-  { id: "after_results", title: "ماذا بعد ظهور النتائج؟" },
-  { id: "packages", title: "تعرّف على الباقات" },
-  { id: "start", title: "ابدأ الآن / تحدث مع مختص" },
-  { id: "feedback", title: "الاقتراحات / الشكاوى" }
-];
-
-app.post("/webhook", (req, res) => {
-  const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-  if (!msg) return res.sendStatus(200);
-
-  const to = msg.from;
-  res.sendStatus(200);
-
-  if (msg.type === "text") {
-    send({
-      messaging_product: "whatsapp",
-      to,
-      type: "interactive",
-      interactive: {
-        type: "list",
-        body: { text: "اختر من القائمة:" },
-        action: {
-          button: "اختر من القائمة",
-          sections: [{ rows: mainMenu }]
-        }
-      }
-    });
-
-    send({
+    body: JSON.stringify({
       messaging_product: "whatsapp",
       to,
       type: "text",
-      text: {
-        body:
-`أهلاً بك في جيناتك 🌱
-مستعد تتعرّف على جسمك لأول مرة؟ ✨
+      text: { body: "تم الاستلام ✅" }
+    })
+  });
+});
 
-جيناتك يعرف حيرتك مع دوامة الأعراض
-ورحلة التشخيص الطويلة،
-فريقنا الطبي موجود
-عشان نشوفك بأتم صحة وعافية`
-      }
-    });
-  }
-
-  if (msg.type === "interactive") {
-    const id = msg.interactive.list_reply.id;
-
-    if (id === "about_genatek") {
-      send({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: {
-          body:
-`جيناتك من أوائل العلامات السعودية المتخصصة في مجال الطب الجيني،
-تعمل تحت إشراف كادر طبي متميز،
-وتقدّم تحاليل DNA تساعدك تفهم صحتك من الجذور.`
-        }
-      });
-
-      send({
-        messaging_product: "whatsapp",
-        to,
-        type: "interactive",
-        interactive: {
-          type: "list",
-          body: { text: "تقدر تكمل من الخيارات التالية:" },
-          action: {
-            button: "اختر من القائمة",
-            sections: [{
-              rows: [
-                { id: "packages", title: "تعرّف على الباقات" },
-                { id: "journey_steps", title: "خطوات رحلتك معنا" },
-                { id: "main_menu", title: "العودة للقائمة الرئيسية" }
-              ]
-            }]
-          }
-        }
-      });
-    }
-
-    if (id === "main_menu") {
-      send({
-        messaging_product: "whatsapp",
-        to,
-        type: "interactive",
-        interactive: {
-          type: "list",
-          body: { text: "اختر من القائمة:" },
-          action: {
-            button: "اختر من القائمة",
-            sections: [{ rows: mainMenu }]
-          }
-        }
-      });
-    }
-  }
+app.get("/", (req, res) => {
+  res.send("OK");
 });
 
 app.listen(process.env.PORT || 3000);
