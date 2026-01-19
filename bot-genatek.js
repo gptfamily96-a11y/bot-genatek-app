@@ -10,9 +10,6 @@ const API_KEY = process.env.DIALOG360_API_KEY;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// حفظ المستخدمين اللي استلموا الترحيب
-const welcomedUsers = new Set();
-
 async function sendText(to, body) {
   await fetch(API_URL, {
     method: "POST",
@@ -64,7 +61,6 @@ app.post("/webhook", async (req, res) => {
 
     const from = message.from;
 
-    // ====== تفاعل القوائم أولًا ======
     if (message.type === "interactive") {
       const id = message.interactive?.list_reply?.id;
 
@@ -93,7 +89,7 @@ app.post("/webhook", async (req, res) => {
         await sleep(600);
 
         await sendText(from,
-`ولسى ما انتبهت الرحلة!
+`ولسى ما انتهت الرحلة!
 نوفر لك منتجات مصمّمة خصيصًا
 حسب طبيعة جيناتك لتحقيق أفضل استجابة
 وبخيار شراء مباشر`);
@@ -102,7 +98,8 @@ app.post("/webhook", async (req, res) => {
 
         await sendText(from,
 `جيناتك مو مجرد فحص
-هي تجربة صحية متكاملة باحترافية عالية وخصوصية تامة..`);
+هي تجربة صحية متكاملة
+باحترافية عالية وخصوصية تامة`);
 
         await sleep(600);
 
@@ -134,16 +131,14 @@ app.post("/webhook", async (req, res) => {
             { id: "feedback", title: "الاقتراحات / الشكاوى" }
           ]
         );
+
         return res.sendStatus(200);
       }
 
       return res.sendStatus(200);
     }
 
-    // ====== رسالة الترحيب (مرة واحدة فقط) ======
-    if (message.type === "text" && !welcomedUsers.has(from)) {
-      welcomedUsers.add(from);
-
+    if (message.type === "text") {
       await sendText(from,
 `أهلاً بك في جيناتك 🌱
 مستعد تتعرّف على جسمك لأول مرة؟ ✨
@@ -175,10 +170,10 @@ app.post("/webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
   } catch (e) {
     console.error(e);
-    res.sendStatus(200);
+    return res.sendStatus(200);
   }
 });
 
