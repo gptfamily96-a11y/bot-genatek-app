@@ -42,7 +42,12 @@ async function sendList(to, bodyText, rows) {
         body: { text: bodyText },
         action: {
           button: "اختر من القائمة",
-          sections: [{ rows }]
+          sections: [
+            {
+              title: "القائمة",
+              rows
+            }
+          ]
         }
       }
     })
