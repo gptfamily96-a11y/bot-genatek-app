@@ -8,7 +8,7 @@ app.use(express.json());
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function sendText(to, body) {
   await fetch(API_URL, {
@@ -42,12 +42,7 @@ async function sendList(to, bodyText, rows) {
         body: { text: bodyText },
         action: {
           button: "اختر من القائمة",
-          sections: [
-            {
-              title: "القائمة",
-              rows
-            }
-          ]
+          sections: [{ rows }]
         }
       }
     })
@@ -65,15 +60,21 @@ const mainMenu = [
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
-app.post("/webhook", async (req, res) => {
-  try {
-    const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message) return res.sendStatus(200);
+app.post("/webhook", (req, res) => {
+  const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!message) return res.sendStatus(200);
 
-    const from = message.from;
+  const from = message.from;
 
+  res.sendStatus(200);
+
+  (async () => {
     if (message.type === "interactive") {
       const id = message.interactive.list_reply.id;
+
+      if (id === "main_menu") {
+        await sendList(from, "اختر من القائمة الرئيسية:", mainMenu);
+      }
 
       if (id === "about_genatek") {
         await sendText(from,
@@ -83,77 +84,29 @@ app.post("/webhook", async (req, res) => {
 تساعدك على فهم صحتك من الجذور
 وإنهاء رحلة التشخيص الطويلة.`);
 
-        await sleep(1200);
-
-        await sendText(from,
-`ولأنك راحتك أولوية، نجيك لين البيت!
-تبدأ رحلتك معنا من المنزل؛
-مندوبنا يجيك لاستلام العينة،
-ونرسل لك النتائج لين عندك!`);
-
-        await sleep(1200);
-
-        await sendText(from,
-`نقدم لك في جيناتك جلسة استشارية خاصة مع فريقنا الطبي المتخصص،
-لشرح نتائج التحاليل وبناء قراراتك الصحية.`);
-
-        await sleep(1200);
-
-        await sendText(from,
-`جيناتك مو مجرد فحص
-هي تجربة صحية متكاملة
-باحترافية عالية وخصوصية تامة`);
-
         await sleep(1500);
 
-        await sendList(
-          from,
-          "تقدر تكمل من الخيارات التالية:",
-          [
-            { id: "packages", title: "تعرّف على الباقات" },
-            { id: "journey_steps", title: "خطوات رحلتك معنا" },
-            { id: "main_menu", title: "العودة للقائمة الرئيسية" }
-          ]
-        );
-
-        return res.sendStatus(200);
+        await sendList(from, "تقدر تكمل من الخيارات التالية:", [
+          { id: "packages", title: "تعرّف على الباقات" },
+          { id: "journey_steps", title: "خطوات رحلتك معنا" },
+          { id: "main_menu", title: "العودة للقائمة الرئيسية" }
+        ]);
       }
-
-      if (id === "main_menu") {
-        await sendList(from, "اختر من القائمة الرئيسية:", mainMenu);
-        return res.sendStatus(200);
-      }
-
-      return res.sendStatus(200);
     }
 
     if (message.type === "text") {
       await sendText(from,
 `أهلاً بك في جيناتك 🌱
-مستعد تتعرّف على جسمك لأول مرة؟ ✨
+مستعد تتعرّف على جسمك لأول مرة؟ ✨`);
 
-جيناتك يعرف حيرتك مع دوامة الأعراض
-ورحلة التشخيص الطويلة،
-فريقنا الطبي موجود
-عشان نشوفك بأتم صحة وعافية`);
+      await sleep(2500);
 
-      await sleep(2000);
-
-      await sendList(
-        from,
-`لا تتردد في أي سؤال يخطر على بالك،
-وتقدر تتعرّف علينا أكثر
-من خلال القوائم التالية:`,
+      await sendList(from,
+`اختر من القائمة:`,
         mainMenu
       );
-
-      return res.sendStatus(200);
     }
-
-    return res.sendStatus(200);
-  } catch {
-    return res.sendStatus(200);
-  }
+  })();
 });
 
 app.listen(process.env.PORT || 3000);
