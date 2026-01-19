@@ -18,9 +18,14 @@ async function send(payload) {
 }
 
 const mainMenu = [
-  { id: "1", title: "1" },
-  { id: "2", title: "2" },
-  { id: "3", title: "3" }
+  { id: "about", title: "من نحن – جيناتك" },
+  { id: "what", title: "ما هو التحليل الجيني؟" },
+  { id: "why", title: "لماذا تحتاج التحليل الجيني؟" },
+  { id: "steps", title: "خطوات رحلتك معنا" },
+  { id: "after", title: "ماذا بعد ظهور النتائج؟" },
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "start", title: "ابدأ الآن / تحدث مع مختص" },
+  { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
 app.get("/", (req, res) => {
@@ -39,12 +44,26 @@ app.post("/webhook", async (req, res) => {
     await send({
       messaging_product: "whatsapp",
       to,
+      type: "text",
+      text: { body: "أهلاً بك 👋" }
+    });
+
+    await send({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body: "اختر من القائمة التالية:" }
+    });
+
+    await send({
+      messaging_product: "whatsapp",
+      to,
       type: "interactive",
       interactive: {
         type: "list",
-        body: { text: "1" },
+        body: { text: "القائمة الرئيسية" },
         action: {
-          button: "1",
+          button: "اختر",
           sections: [
             {
               rows: mainMenu
@@ -57,13 +76,16 @@ app.post("/webhook", async (req, res) => {
 
   if (msg.type === "interactive") {
     const id = msg.interactive.list_reply.id;
+    const selected = mainMenu.find(r => r.id === id);
 
-    await send({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: id }
-    });
+    if (selected) {
+      await send({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: selected.title }
+      });
+    }
   }
 });
 
