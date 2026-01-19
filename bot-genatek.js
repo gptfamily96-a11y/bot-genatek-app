@@ -49,6 +49,17 @@ async function sendList(to, bodyText, rows) {
   });
 }
 
+const mainMenu = [
+  { id: "about_genatek", title: "من نحن – جيناتك" },
+  { id: "what_test", title: "ما هو التحليل الجيني؟" },
+  { id: "why_test", title: "لماذا تحتاج التحليل الجيني؟" },
+  { id: "journey_steps", title: "خطوات رحلتك معنا" },
+  { id: "after_results", title: "ماذا بعد ظهور النتائج؟" },
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "start", title: "ابدأ الآن / تحدث مع مختص" },
+  { id: "feedback", title: "الاقتراحات / الشكاوى" }
+];
+
 app.post("/webhook", async (req, res) => {
   try {
     const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
@@ -57,7 +68,7 @@ app.post("/webhook", async (req, res) => {
     const from = message.from;
 
     if (message.type === "interactive") {
-      const id = message.interactive?.list_reply?.id;
+      const id = message.interactive.list_reply.id;
 
       if (id === "about_genatek") {
         await sendText(from,
@@ -67,14 +78,48 @@ app.post("/webhook", async (req, res) => {
 تساعدك على فهم صحتك من الجذور
 وإنهاء رحلة التشخيص الطويلة.`);
 
+        await sleep(1200);
+
+        await sendText(from,
+`ولأنك راحتك أولوية، نجيك لين البيت!
+تبدأ رحلتك معنا من المنزل؛
+مندوبنا يجيك لاستلام العينة،
+ونرسل لك النتائج لين عندك!`);
+
+        await sleep(1200);
+
+        await sendText(from,
+`نقدم لك في جيناتك جلسة استشارية خاصة مع فريقنا الطبي المتخصص،
+لشرح نتائج التحاليل وبناء قراراتك الصحية.`);
+
+        await sleep(1200);
+
+        await sendText(from,
+`جيناتك مو مجرد فحص
+هي تجربة صحية متكاملة
+باحترافية عالية وخصوصية تامة`);
+
         await sleep(1500);
 
-        await sendList(from, "تقدر تكمل من الخيارات التالية:", [
-          { id: "main_menu", title: "العودة للقائمة الرئيسية" }
-        ]);
+        await sendList(
+          from,
+          "تقدر تكمل من الخيارات التالية:",
+          [
+            { id: "packages", title: "تعرّف على الباقات" },
+            { id: "journey_steps", title: "خطوات رحلتك معنا" },
+            { id: "main_menu", title: "العودة للقائمة الرئيسية" }
+          ]
+        );
 
         return res.sendStatus(200);
       }
+
+      if (id === "main_menu") {
+        await sendList(from, "اختر من القائمة الرئيسية:", mainMenu);
+        return res.sendStatus(200);
+      }
+
+      return res.sendStatus(200);
     }
 
     if (message.type === "text") {
@@ -89,13 +134,12 @@ app.post("/webhook", async (req, res) => {
 
       await sleep(2000);
 
-      await sendList(from,
+      await sendList(
+        from,
 `لا تتردد في أي سؤال يخطر على بالك،
 وتقدر تتعرّف علينا أكثر
 من خلال القوائم التالية:`,
-        [
-          { id: "about_genatek", title: "من نحن – جيناتك" }
-        ]
+        mainMenu
       );
 
       return res.sendStatus(200);
