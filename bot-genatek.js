@@ -99,8 +99,13 @@ const STATE = {
 };
 
 const startMenu = [
+<<<<<<< HEAD
   { id: "start_choose", title: "ابدأ الآن / اختر الباقة" },
   { id: "contact_consultant", title: "تحدث مع مستشار جيناتك" },
+=======
+  { id: "start_choose", title: "اختر الباقة" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
+>>>>>>> parent of cff9f52 (اخر تعديل قبل الحملة الاولى)
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
@@ -173,7 +178,7 @@ app.post("/webhook", async (req, res) => {
     delete userState[to];
     await sendText(
       to,
-      "يسعدنا سماع رأيك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+      "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(to, welcomeMenuText, mainMenu);
     return;
@@ -183,7 +188,7 @@ app.post("/webhook", async (req, res) => {
     delete userState[to];
     await sendText(
       to,
-      "تم استلام رسالتك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+      "تم استلام رسالتك وسيتم الرد عليك قريبًا"
     );
     await sendList(to, welcomeMenuText, mainMenu);
     return;
@@ -227,7 +232,7 @@ if (id === "start_choose") {
 if (id === "contact_consultant") {
   await sendList(
     to,
-`يمكنك اختيار وسيلة التواصل المناسبة`,
+`اختر وسيلة التواصل المناسبة`,
     contactMenu
   );
   return;
