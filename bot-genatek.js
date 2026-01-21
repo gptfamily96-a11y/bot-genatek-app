@@ -97,7 +97,7 @@ const STATE = {
 };
 
 const startMenu = [
-  { id: "start_choose", title: "اختر الباقة" },
+  { id: "start_choose", title: "اختر الباقة المناسبة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
@@ -115,12 +115,12 @@ const startPackagesMenu = [
 
 const contactMenu = [
   { id: "request_call", title: "طلب مكالمة" },
-  { id: "whatsapp_chat", title: "محادثة واتساب" },
+  { id: "whatsapp_chat", title: "تحدث عبر الواتساب" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
 const buyPackageMenu = [
-  { id: "packages", title: "تفاصيل الباقة" },
+  { id: "packages", title: "تعرف على تفاصيل الباقة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "start_choose", title: "العودة للباقات" },
   { id: "main_menu", title: "القائمة الرئيسية" }
@@ -161,15 +161,15 @@ app.post("/webhook", async (req, res) => {
     return;
   }
 
-  if (userState[to] === STATE.WAITING_WHATSAPP) {
-    delete userState[to];
-    await sendText(
-      to,
-      "تم استلام رسالتك وسيتم الرد عليك قريبًا"
-    );
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
+ if (userState[to] === STATE.WAITING_WHATSAPP) {
+  delete userState[to];
+  await sendText(
+    to,
+    "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+  );
+  await sendList(to, welcomeMenuText, mainMenu);
+  return;
+}
 
     await sendText(
       to,
@@ -187,6 +187,41 @@ app.post("/webhook", async (req, res) => {
   if (msg.type !== "interactive") return;
   const id = msg.interactive.list_reply.id;
 
+if (id === "package_details") {
+
+  const pkgId = userState[to];
+
+  if (!pkgId) {
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
+  if (pkgId === "pkg_afiya") {
+    msg.interactive.list_reply.id = "pkg_afiya";
+  }
+
+  if (pkgId === "pkg_beauty") {
+    msg.interactive.list_reply.id = "pkg_beauty";
+  }
+
+  if (pkgId === "pkg_psych") {
+    msg.interactive.list_reply.id = "pkg_psych";
+  }
+
+  if (pkgId === "pkg_allergy") {
+    msg.interactive.list_reply.id = "pkg_allergy";
+  }
+
+  if (pkgId === "pkg_digest") {
+    msg.interactive.list_reply.id = "pkg_digest";
+  }
+
+  if (pkgId === "pkg_full") {
+    msg.interactive.list_reply.id = "pkg_full";
+  }
+
+}
+
 if (id === "start") {
   await sendList(
     to,
@@ -200,7 +235,8 @@ if (id === "start") {
 if (id === "start_choose") {
   await sendList(
     to,
-`اختر الباقة المناسبة`,
+`يمكنك اختيار الباقة المناسبة من خلال القوائم التالية
+او بالتحدث مع مستشار جيناتك للمساعدة`,
     startPackagesMenu
   );
   return;
@@ -209,7 +245,7 @@ if (id === "start_choose") {
 if (id === "contact_consultant") {
   await sendList(
     to,
-`اختر وسيلة التواصل المناسبة`,
+    `يمكنك اختيار وسيلة التواصل المناسبة`,
     contactMenu
   );
   return;
@@ -250,20 +286,55 @@ if (id === "feedback") {
 }
 
 if (id.startsWith("buy_pkg_")) {
-  const links = {
-    buy_pkg_afiya: "https://acl.com.sa/460/packages/16290?type=1",
-    buy_pkg_beauty: "https://www.acl.com.sa/460/packages/16292?type=1",
-    buy_pkg_psych: "https://www.acl.com.sa/460/packages/16295?type=1",
-    buy_pkg_allergy: "https://www.acl.com.sa/460/packages/16296?type=1",
-    buy_pkg_digest: "https://www.acl.com.sa/460/packages/16298?type=1",
-    buy_pkg_full: "https://www.acl.com.sa/460/packages/16300?type=1"
+
+  const packageMap = {
+    buy_pkg_afiya: {
+      name: "العافية 360 – التغذية",
+      link: "https://acl.com.sa/460/packages/16290?type=1",
+      detailsId: "pkg_afiya"
+    },
+    buy_pkg_beauty: {
+      name: "جينات الجمال والتميّز",
+      link: "https://www.acl.com.sa/460/packages/16292?type=1",
+      detailsId: "pkg_beauty"
+    },
+    buy_pkg_psych: {
+      name: "جينات الانسجام النفسي",
+      link: "https://www.acl.com.sa/460/packages/16295?type=1",
+      detailsId: "pkg_psych"
+    },
+    buy_pkg_allergy: {
+      name: "خريطة الحساسية",
+      link: "https://www.acl.com.sa/460/packages/16296?type=1",
+      detailsId: "pkg_allergy"
+    },
+    buy_pkg_digest: {
+      name: "خريطة الجهاز الهضمي",
+      link: "https://www.acl.com.sa/460/packages/16298?type=1",
+      detailsId: "pkg_digest"
+    },
+    buy_pkg_full: {
+      name: "الباقة الجينية الشاملة",
+      link: "https://www.acl.com.sa/460/packages/16300?type=1",
+      detailsId: "pkg_full"
+    }
   };
+
+  const pkg = packageMap[id];
+  if (!pkg) return;
+
+  userState[to] = pkg.detailsId;
 
   await sendList(
     to,
-`رابط الشراء المباشر:
-${links[id]}`,
-    buyPackageMenu
+`رابط الشراء المباشر لباقة ${pkg.name}:
+${pkg.link}`,
+    [
+      { id: "package_details", title: "تعرف على تفاصيل الباقة" },
+      { id: "contact_consultant", title: "تحدث مع مستشار" },
+      { id: "start_choose", title: "العودة للباقات" },
+      { id: "main_menu", title: "القائمة الرئيسية" }
+    ]
   );
   return;
 }
