@@ -70,6 +70,14 @@ const mainMenu = [
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
+const infoSubMenu = [
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+/* ====== الوحدة ②: الأقسام التعريفية ====== */
+
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
 
@@ -78,14 +86,127 @@ app.post("/webhook", async (req, res) => {
 
   const from = msg.from;
 
-  // أي رسالة نصية = ترحيب + القائمة الرئيسية
   if (msg.type === "text") {
     await sendText(from, welcomeText);
     await sendList(from, mainIntro, mainMenu);
     return;
   }
 
-  // أي تفاعل (interactive) حاليًا لا نفعل له شيء في الوحدة ①
+  if (msg.type !== "interactive") return;
+  const id = msg.interactive.list_reply.id;
+
+  if (id === "main_menu") {
+    await sendList(from, mainIntro, mainMenu);
+    return;
+  }
+
+  if (id === "about") {
+    await sendText(
+      from,
+`*جيناتك من أوائل العلامات السعودية المتخصصة في مجال الطب الجيني*
+
+تعمل تحت إشراف كادر طبي متميز.
+
+نقدّم مجموعة من التحاليل الجينية (DNA)
+تساعدك على فهم صحتك من الجذور
+وإنهاء رحلة التشخيص الطويلة.`
+    );
+
+    await sendText(
+      from,
+`*ولأن راحتك أولوية، نجيك لين البيت!*
+
+تبدأ رحلتك معنا من المنزل؛
+مندوبنا يجيك لاستلام العينة،
+ونرسل لك النتائج لين عندك.
+
+كما نقدّم جلسة استشارية خاصة
+مع فريقنا الطبي المتخصص
+لشرح النتائج وبناء قراراتك الصحية.`
+    );
+
+    await sendList(
+      from,
+`*جيناتك مو مجرد فحص*
+
+هي تجربة صحية متكاملة
+باحترافية عالية وخصوصية تامة.`,
+      infoSubMenu
+    );
+    return;
+  }
+
+  if (id === "what") {
+    await sendText(
+      from,
+`*ما هو التحليل الجيني؟*
+
+التحليل الجيني هو فحص لأجزاء محددة
+من حمضك النووي (DNA)
+عن طريق عينة بسيطة من اللعاب.`
+    );
+
+    await sendList(
+      from,
+`من خلال تحليلك الجيني نقدر نفهم:
+• ليه أعراض معيّنة تتكرر عندك
+• كيف يتفاعل جسمك مع الغذاء والأدوية
+• استعدادك لمشاكل صحية معيّنة`,
+      infoSubMenu
+    );
+    return;
+  }
+
+  if (id === "why") {
+    await sendText(
+      from,
+`*ليش تحتاج التحليل الجيني؟*
+
+التحليل الجيني ما صار رفاهية،
+هو أول خطوة صحية فارقة
+للوصول لأفضل نسخة صحية من جسمك.`
+    );
+
+    await sendList(
+      from,
+`يساعدك على:
+• فهم السبب الحقيقي للأعراض
+• بناء قرارات صحية على جسمك أنت
+• إنهاء رحلة الحيرة`,
+      infoSubMenu
+    );
+    return;
+  }
+
+  if (id === "steps") {
+    await sendText(
+      from,
+`*رحلتك مع جيناتك واضحة واحترافية*
+
+اختيار الباقة
+استلام العينة
+التحليل الجيني
+التقرير
+الجلسة الاستشارية`
+    );
+
+    await sendList(from, "تابع:", infoSubMenu);
+    return;
+  }
+
+  if (id === "after") {
+    await sendText(
+      from,
+`*ماذا بعد النتائج؟*
+
+تحصل على تقرير جيني مفصّل
+وتوصيات صحية مخصّصة لك
+وجلسة استشارية لفهم النتائج.`
+    );
+
+    await sendList(from, "التالي:", infoSubMenu);
+    return;
+  }
 });
 
 app.listen(process.env.PORT || 3000);
