@@ -120,7 +120,7 @@ const contactMenu = [
 ];
 
 const buyPackageMenu = [
-  { id: "packages", title: "تعرف على تفاصيل الباقة" },
+  { id: "package_details", title: "تعرف على تفاصيل الباقة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "start_choose", title: "العودة للباقات" },
   { id: "main_menu", title: "القائمة الرئيسية" }
@@ -185,7 +185,7 @@ app.post("/webhook", async (req, res) => {
   }
 
   if (msg.type !== "interactive") return;
-  const id = msg.interactive.list_reply.id;
+  let id = msg.interactive.list_reply.id;
 
 if (id === "package_details") {
 
@@ -196,31 +196,22 @@ if (id === "package_details") {
     return;
   }
 
+  // تحويل مباشر إلى منطق تفاصيل الباقة
   if (pkgId === "pkg_afiya") {
-    msg.interactive.list_reply.id = "pkg_afiya";
+    id = "pkg_afiya";
+  } else if (pkgId === "pkg_beauty") {
+    id = "pkg_beauty";
+  } else if (pkgId === "pkg_psych") {
+    id = "pkg_psych";
+  } else if (pkgId === "pkg_allergy") {
+    id = "pkg_allergy";
+  } else if (pkgId === "pkg_digest") {
+    id = "pkg_digest";
+  } else if (pkgId === "pkg_full") {
+    id = "pkg_full";
   }
-
-  if (pkgId === "pkg_beauty") {
-    msg.interactive.list_reply.id = "pkg_beauty";
-  }
-
-  if (pkgId === "pkg_psych") {
-    msg.interactive.list_reply.id = "pkg_psych";
-  }
-
-  if (pkgId === "pkg_allergy") {
-    msg.interactive.list_reply.id = "pkg_allergy";
-  }
-
-  if (pkgId === "pkg_digest") {
-    msg.interactive.list_reply.id = "pkg_digest";
-  }
-
-  if (pkgId === "pkg_full") {
-    msg.interactive.list_reply.id = "pkg_full";
-  }
-
 }
+
 
 if (id === "start") {
   await sendList(
