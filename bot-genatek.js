@@ -87,8 +87,6 @@ const packageSubMenu = [
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
-const userLastPackage = {};
-
 const userState = {};
 
 const STATE = {
@@ -99,16 +97,11 @@ const STATE = {
 };
 
 const startMenu = [
-<<<<<<< HEAD
-  { id: "start_choose", title: "ابدأ الآن / اختر الباقة" },
-  { id: "contact_consultant", title: "تحدث مع مستشار جيناتك" },
-=======
-  { id: "start_choose", title: "اختر الباقة" },
+  { id: "start_choose", title: "يمكنك اختيار الباقة المناسبة من خلال رابط الشراء المباشر
+أو بالتحدث مع مستشار جيناتك للمساعدة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
->>>>>>> parent of cff9f52 (اخر تعديل قبل الحملة الاولى)
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
-
 
 const startPackagesMenu = [
   { id: "buy_pkg_afiya", title: "العافية 360" },
@@ -128,7 +121,7 @@ const contactMenu = [
 ];
 
 const buyPackageMenu = [
-   { id: "package_details", title: "تعرف على تفاصيل الباقة" },
+  { id: "packages", title: "تفاصيل الباقة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "start_choose", title: "العودة للباقات" },
   { id: "main_menu", title: "القائمة الرئيسية" }
@@ -138,20 +131,6 @@ const buyPackageMenu = [
 app.get("/", (req, res) => {
   res.send("OK");
 });
-
-async function sendPackageDetails(to, pkgId) {
-  if (pkgId === "pkg_afiya") {
-    await sendText(to, `*باقة الصحة الشاملة، تحسين الوزن والتغذية المخصّصة*\n\n...`);
-    await sendList(to, `*وش تقدم لك باقة العافية 360؟*\n...`, packageSubMenu);
-  }
-
-  if (pkgId === "pkg_beauty") {
-    await sendText(to, `*باقة جينات الجمال والتميّز*\n\n...`);
-    await sendList(to, `*وش تقدم لك باقة جينات الجمال والتميّز؟*\n...`, packageSubMenu);
-  }
-
-  // وهكذا لبقية الباقات (نفس النصوص الموجودة عندك حرفيًا)
-}
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
@@ -163,22 +142,21 @@ app.post("/webhook", async (req, res) => {
 
   if (msg.type === "text") {
 
- if (userState[to] === STATE.WAITING_CALL) {
-  delete userState[to];
-  await sendList(
-    to,
-    "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة",
-    [{ id: "main_menu", title: "العودة للقائمة الرئيسية" }]
-  );
-  return;
-}
-
+  if (userState[to] === STATE.WAITING_CALL) {
+    delete userState[to];
+    await sendText(
+      to,
+      "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
+    );
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
 
   if (userState[to] === STATE.WAITING_FEEDBACK) {
     delete userState[to];
     await sendText(
       to,
-      "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+      "يسعدنا سماع رأيك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(to, welcomeMenuText, mainMenu);
     return;
@@ -188,7 +166,7 @@ app.post("/webhook", async (req, res) => {
     delete userState[to];
     await sendText(
       to,
-      "تم استلام رسالتك وسيتم الرد عليك قريبًا"
+      "تم استلام رسالتك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(to, welcomeMenuText, mainMenu);
     return;
@@ -232,7 +210,7 @@ if (id === "start_choose") {
 if (id === "contact_consultant") {
   await sendList(
     to,
-`اختر وسيلة التواصل المناسبة`,
+`يمكنك اختيار وسيلة التواصل المناسبة`,
     contactMenu
   );
   return;
@@ -273,8 +251,6 @@ if (id === "feedback") {
 }
 
 if (id.startsWith("buy_pkg_")) {
-    userLastPackage[to] = id;
-
   const links = {
     buy_pkg_afiya: "https://acl.com.sa/460/packages/16290?type=1",
     buy_pkg_beauty: "https://www.acl.com.sa/460/packages/16292?type=1",
@@ -292,38 +268,6 @@ ${links[id]}`,
   );
   return;
 }
-
-if (id === "package_details") {
-  const last = userLastPackage[to];
-
-  if (!last) {
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
-
-  const pkgId = last.replace("buy_", "");
-  await sendPackageDetails(to, pkgId);
-  return;
-}
-
-
-  // نحول buy_pkg_* إلى pkg_*
-if (id === "package_details") {
-  const last = userLastPackage[to];
-
-  if (!last) {
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
-
-  const pkgId = last.replace("buy_", "");
-  await sendPackageDetails(to, pkgId);
-  return;
-}
-
-  // نترك التنفيذ يكمل لبلوك الباقة الأصلي
-}
-
 
 
   if (id === "main_menu") {
