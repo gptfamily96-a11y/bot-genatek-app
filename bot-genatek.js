@@ -87,6 +87,46 @@ const packageSubMenu = [
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
+const userState = {};
+
+const STATE = {
+  NONE: "none",
+  WAITING_CALL: "waiting_call",
+  WAITING_FEEDBACK: "waiting_feedback",
+  WAITING_WHATSAPP: "waiting_whatsapp"
+};
+
+const startMenu = [
+  { id: "start_choose", title: "اختر الباقة" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const startPackagesMenu = [
+  { id: "buy_pkg_afiya", title: "العافية 360" },
+  { id: "buy_pkg_beauty", title: "جينات الجمال" },
+  { id: "buy_pkg_psych", title: "الانسجام النفسي" },
+  { id: "buy_pkg_allergy", title: "خريطة الحساسية" },
+  { id: "buy_pkg_digest", title: "الجهاز الهضمي" },
+  { id: "buy_pkg_full", title: "الباقة الشاملة" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const contactMenu = [
+  { id: "request_call", title: "طلب مكالمة" },
+  { id: "whatsapp_chat", title: "محادثة واتساب" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const buyPackageMenu = [
+  { id: "packages", title: "تفاصيل الباقة" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
+  { id: "start_choose", title: "العودة للباقات" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+
 app.get("/", (req, res) => {
   res.send("OK");
 });
@@ -100,6 +140,37 @@ app.post("/webhook", async (req, res) => {
   const to = msg.from;
 
   if (msg.type === "text") {
+
+  if (userState[to] === STATE.WAITING_CALL) {
+    delete userState[to];
+    await sendText(
+      to,
+      "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
+    );
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
+  if (userState[to] === STATE.WAITING_FEEDBACK) {
+    delete userState[to];
+    await sendText(
+      to,
+      "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+    );
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
+  if (userState[to] === STATE.WAITING_WHATSAPP) {
+    delete userState[to];
+    await sendText(
+      to,
+      "تم استلام رسالتك وسيتم الرد عليك قريبًا"
+    );
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
     await sendText(
       to,
 `أهلاً بك في جيناتك 🌱
@@ -115,6 +186,88 @@ app.post("/webhook", async (req, res) => {
 
   if (msg.type !== "interactive") return;
   const id = msg.interactive.list_reply.id;
+
+if (id === "start") {
+  await sendList(
+    to,
+`يمكنك اختيار الباقة المناسبة من خلال رابط الشراء المباشر
+أو بالتحدث مع مستشار جيناتك للمساعدة`,
+    startMenu
+  );
+  return;
+}
+
+if (id === "start_choose") {
+  await sendList(
+    to,
+`اختر الباقة المناسبة`,
+    startPackagesMenu
+  );
+  return;
+}
+
+if (id === "contact_consultant") {
+  await sendList(
+    to,
+`اختر وسيلة التواصل المناسبة`,
+    contactMenu
+  );
+  return;
+}
+
+if (id === "request_call") {
+  userState[to] = STATE.WAITING_CALL;
+  await sendList(
+    to,
+`سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة
+فضلاً اكتب اسمك ورقم الهاتف`,
+    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+  );
+  return;
+}
+
+if (id === "whatsapp_chat") {
+  userState[to] = STATE.WAITING_WHATSAPP;
+  await sendList(
+    to,
+`يسعدنا سماع استفسارك
+وسيتم الرد عليك من قبل أحد ممثلينا`,
+    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+  );
+  return;
+}
+
+if (id === "feedback") {
+  userState[to] = STATE.WAITING_FEEDBACK;
+  await sendList(
+    to,
+`يهمنا سماع رأيك
+اكتب رسالتك وسيتم الرد عليك
+من قبل أحد ممثلي خدمة العملاء`,
+    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+  );
+  return;
+}
+
+if (id.startsWith("buy_pkg_")) {
+  const links = {
+    buy_pkg_afiya: "https://acl.com.sa/460/packages/16290?type=1",
+    buy_pkg_beauty: "https://www.acl.com.sa/460/packages/16292?type=1",
+    buy_pkg_psych: "https://www.acl.com.sa/460/packages/16295?type=1",
+    buy_pkg_allergy: "https://www.acl.com.sa/460/packages/16296?type=1",
+    buy_pkg_digest: "https://www.acl.com.sa/460/packages/16298?type=1",
+    buy_pkg_full: "https://www.acl.com.sa/460/packages/16300?type=1"
+  };
+
+  await sendList(
+    to,
+`رابط الشراء المباشر:
+${links[id]}`,
+    buyPackageMenu
+  );
+  return;
+}
+
 
   if (id === "main_menu") {
     await sendList(to, welcomeMenuText, mainMenu);
@@ -394,7 +547,7 @@ if (id === "pkg_beauty") {
 • إزالة السموم – المرحلة الثانية: تحييد السموم مثل المبيدات والمعادن الثقيلة.
 • تعرف على استجابة جسمك الجينية للكافيين، الكحول، والقنب مع توصيات مخصّصة.
 • استراتيجيات وقائية وإرشادات غذائية مخصّصة مع أفضل مصادر لمضادات الأكسدة.
-• خليط المغذيات الدقيقة المخصّص: Complete NutriMe,  وهو مزيج غذائي مصمّم وراثيًا لتحسين الامتصاص ودعم صحتك على المدى الطويل.`,
+• خليط المغذيات الدقيقة المخصّص: Complete NutriMe,  وهو مزيج غذائي مصمّم وراثيًا لتحسين الامتصاصودعم صحتك على المدى الطويل.`,
     packageSubMenu
   );
   return;
