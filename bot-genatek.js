@@ -97,11 +97,11 @@ const STATE = {
 };
 
 const startMenu = [
-  { id: "start_choose", title: "يمكنك اختيار الباقة المناسبة من خلال رابط الشراء المباشر
-أو بالتحدث مع مستشار جيناتك للمساعدة" },
-  { id: "contact_consultant", title: "تحدث مع مستشار" },
+  { id: "start_choose", title: "ابدأ الآن / اختر الباقة" },
+  { id: "contact_consultant", title: "تحدث مع مستشار جيناتك" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
+
 
 const startPackagesMenu = [
   { id: "buy_pkg_afiya", title: "العافية 360" },
@@ -121,7 +121,7 @@ const contactMenu = [
 ];
 
 const buyPackageMenu = [
-  { id: "packages", title: "تفاصيل الباقة" },
+   { id: "package_details", title: "تعرف على تفاصيل الباقة" },
   { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "start_choose", title: "العودة للباقات" },
   { id: "main_menu", title: "القائمة الرئيسية" }
@@ -142,15 +142,16 @@ app.post("/webhook", async (req, res) => {
 
   if (msg.type === "text") {
 
-  if (userState[to] === STATE.WAITING_CALL) {
-    delete userState[to];
-    await sendText(
-      to,
-      "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
-    );
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
+ if (userState[to] === STATE.WAITING_CALL) {
+  delete userState[to];
+  await sendList(
+    to,
+    "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة",
+    [{ id: "main_menu", title: "العودة للقائمة الرئيسية" }]
+  );
+  return;
+}
+
 
   if (userState[to] === STATE.WAITING_FEEDBACK) {
     delete userState[to];
@@ -251,6 +252,8 @@ if (id === "feedback") {
 }
 
 if (id.startsWith("buy_pkg_")) {
+  userState[to] = id;
+
   const links = {
     buy_pkg_afiya: "https://acl.com.sa/460/packages/16290?type=1",
     buy_pkg_beauty: "https://www.acl.com.sa/460/packages/16292?type=1",
@@ -266,6 +269,20 @@ if (id.startsWith("buy_pkg_")) {
 ${links[id]}`,
     buyPackageMenu
   );
+  return;
+}
+
+if (id === "package_details") {
+  const last = userState[to];
+
+  if (last === "buy_pkg_afiya") return sendList(to, "محتوى باقة العافية 360", packageSubMenu);
+  if (last === "buy_pkg_beauty") return sendList(to, "محتوى باقة الجمال", packageSubMenu);
+  if (last === "buy_pkg_psych") return sendList(to, "محتوى باقة الانسجام النفسي", packageSubMenu);
+  if (last === "buy_pkg_allergy") return sendList(to, "محتوى باقة الحساسية", packageSubMenu);
+  if (last === "buy_pkg_digest") return sendList(to, "محتوى باقة الجهاز الهضمي", packageSubMenu);
+  if (last === "buy_pkg_full") return sendList(to, "محتوى الباقة الشاملة", packageSubMenu);
+
+  await sendList(to, welcomeMenuText, mainMenu);
   return;
 }
 
