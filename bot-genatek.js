@@ -89,6 +89,8 @@ const packageSubMenu = [
 
 const userState = {};
 
+const lastSelectedPackage = {};
+
 const STATE = {
   NONE: "none",
   WAITING_CALL: "waiting_call",
@@ -185,11 +187,17 @@ app.post("/webhook", async (req, res) => {
   }
 
   if (msg.type !== "interactive") return;
-  let id = msg.interactive.list_reply.id;
+  let id =
+  msg.interactive?.list_reply?.id ||
+  msg.interactive?.button_reply?.id;
+
+if (!id) return;
+
 
 if (id === "package_details") {
 
-  const pkgId = userState[to];
+  const pkgId = lastSelectedPackage[to];
+
 
   if (!pkgId) {
     await sendList(to, welcomeMenuText, mainMenu);
@@ -314,7 +322,7 @@ if (id.startsWith("buy_pkg_")) {
   const pkg = packageMap[id];
   if (!pkg) return;
 
-  userState[to] = pkg.detailsId;
+  lastSelectedPackage[to] = pkg.detailsId;
 
   await sendList(
     to,
