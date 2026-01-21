@@ -87,6 +87,8 @@ const packageSubMenu = [
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
+const userLastPackage = {};
+
 const userState = {};
 
 const STATE = {
@@ -131,6 +133,20 @@ const buyPackageMenu = [
 app.get("/", (req, res) => {
   res.send("OK");
 });
+
+async function sendPackageDetails(to, pkgId) {
+  if (pkgId === "pkg_afiya") {
+    await sendText(to, `*باقة الصحة الشاملة، تحسين الوزن والتغذية المخصّصة*\n\n...`);
+    await sendList(to, `*وش تقدم لك باقة العافية 360؟*\n...`, packageSubMenu);
+  }
+
+  if (pkgId === "pkg_beauty") {
+    await sendText(to, `*باقة جينات الجمال والتميّز*\n\n...`);
+    await sendList(to, `*وش تقدم لك باقة جينات الجمال والتميّز؟*\n...`, packageSubMenu);
+  }
+
+  // وهكذا لبقية الباقات (نفس النصوص الموجودة عندك حرفيًا)
+}
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
@@ -252,7 +268,7 @@ if (id === "feedback") {
 }
 
 if (id.startsWith("buy_pkg_")) {
-  userState[to] = id;
+    userLastPackage[to] = id;
 
   const links = {
     buy_pkg_afiya: "https://acl.com.sa/460/packages/16290?type=1",
@@ -273,18 +289,36 @@ ${links[id]}`,
 }
 
 if (id === "package_details") {
-  const last = userState[to];
+  const last = userLastPackage[to];
 
-  if (last === "buy_pkg_afiya") return sendList(to, "محتوى باقة العافية 360", packageSubMenu);
-  if (last === "buy_pkg_beauty") return sendList(to, "محتوى باقة الجمال", packageSubMenu);
-  if (last === "buy_pkg_psych") return sendList(to, "محتوى باقة الانسجام النفسي", packageSubMenu);
-  if (last === "buy_pkg_allergy") return sendList(to, "محتوى باقة الحساسية", packageSubMenu);
-  if (last === "buy_pkg_digest") return sendList(to, "محتوى باقة الجهاز الهضمي", packageSubMenu);
-  if (last === "buy_pkg_full") return sendList(to, "محتوى الباقة الشاملة", packageSubMenu);
+  if (!last) {
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
 
-  await sendList(to, welcomeMenuText, mainMenu);
+  const pkgId = last.replace("buy_", "");
+  await sendPackageDetails(to, pkgId);
   return;
 }
+
+
+  // نحول buy_pkg_* إلى pkg_*
+if (id === "package_details") {
+  const last = userLastPackage[to];
+
+  if (!last) {
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
+  const pkgId = last.replace("buy_", "");
+  await sendPackageDetails(to, pkgId);
+  return;
+}
+
+  // نترك التنفيذ يكمل لبلوك الباقة الأصلي
+}
+
 
 
   if (id === "main_menu") {
