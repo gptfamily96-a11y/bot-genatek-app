@@ -1,3 +1,41 @@
+async function sendToChatwoot(from, message) {
+  await fetch("http://localhost:3000/api/v1/inboxes/INBOX_ID/contacts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api_access_token": "CHATWOOT_TOKEN"
+    },
+    body: JSON.stringify({
+      identifier: from,
+      name: from
+    })
+  });
+
+  await fetch("http://localhost:3000/api/v1/inboxes/INBOX_ID/conversations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api_access_token": "CHATWOOT_TOKEN"
+    },
+    body: JSON.stringify({
+      source_id: from
+    })
+  });
+
+  await fetch("http://localhost:3000/api/v1/conversations/${from}/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api_access_token": "CHATWOOT_TOKEN"
+    },
+    body: JSON.stringify({
+      content: message,
+      message_type: "incoming"
+    })
+  });
+}
+
+
 const express = require("express");
 
 const app = express();
@@ -140,6 +178,8 @@ app.post("/webhook", async (req, res) => {
   if (!msg) return;
 
   const to = msg.from;
+
+await sendToChatwoot(to, msg.text?.body || "رسالة");
 
   if (msg.type === "text") {
 
