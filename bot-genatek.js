@@ -1,7 +1,7 @@
 async function sendToChatwoot(phone, text) {
   try {
     const res = await fetch(
-      "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/inboxes/3hnL5AC8AbAvCbacc6VNsRk6/messages",
+      "https://chatwoot-app-lzpe.onrender.com/app/api/v1/accounts/1/inboxes/3hnL5AC8AbAvCbacc6VNsRk6/messages",
       {
         method: "POST",
         headers: {
@@ -23,7 +23,6 @@ async function sendToChatwoot(phone, text) {
     console.log("CHATWOOT ERROR:", e.message);
   }
 }
-
 
 
 const express = require("express");
