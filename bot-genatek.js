@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 const app = express();
 app.use(express.json());
 
-// ================== CHATWOOT ==================
+/* ================= CHATWOOT ================= */
 const CHATWOOT_BASE_URL = "https://app.chatwoot.com";
 const CHATWOOT_INBOX_IDENTIFIER = "DQ1mXro7vP1MiqADzFuQg78";
 const CHATWOOT_API_TOKEN = process.env.CHATWOOT_API_TOKEN;
@@ -22,20 +22,21 @@ async function sendToChatwoot(phone, text) {
         body: JSON.stringify({
           content: text,
           sender: {
-            identifier: phone
+            phone_number: phone
           }
         })
       }
     );
 
-    console.log("CHATWOOT STATUS:", res.status);
-    console.log("CHATWOOT RESPONSE:", await res.text());
+    if (!res.ok) {
+      console.error("CHATWOOT ERROR:", await res.text());
+    }
   } catch (e) {
-    console.log("CHATWOOT ERROR:", e.message);
+    console.error("CHATWOOT EXCEPTION:", e.message);
   }
 }
 
-// ================== 360DIALOG ==================
+/* ================= 360DIALOG ================= */
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
@@ -75,7 +76,18 @@ async function sendList(to, bodyText, rows) {
   });
 }
 
-// ================== MENUS & STATE ==================
+/* ================= STATE ================= */
+const userState = {};
+const lastSelectedPackage = {};
+
+const STATE = {
+  HUMAN_HANDOVER: "HUMAN_HANDOVER",
+  WAITING_CALL: "WAITING_CALL",
+  WAITING_FEEDBACK: "WAITING_FEEDBACK",
+  WAITING_WHATSAPP: "WAITING_WHATSAPP"
+};
+
+/* ================= MENUS ================= */
 const welcomeMenuText = `لا تتردد في أي سؤال يخطر على بالك،
 وتقدر تتعرّف علينا أكثر
 من خلال القوائم التالية:`;
@@ -91,47 +103,8 @@ const mainMenu = [
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
-const subMenuAbout = [
-  { id: "packages", title: "تعرّف على الباقات" },
-  { id: "steps", title: "خطوات رحلتك معنا" },
-  { id: "main_menu", title: "القائمة الرئيسية" }
-];
-
-const subMenuSteps = [
-  { id: "packages", title: "تعرّف على الباقات" },
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
-  { id: "main_menu", title: "القائمة الرئيسية" }
-];
-
-const packagesMenu = [
-  { id: "pkg_afiya", title: "العافية 360 – التغذية" },
-  { id: "pkg_beauty", title: "جينات الجمال والتميّز" },
-  { id: "pkg_psych", title: "جينات الانسجام النفسي" },
-  { id: "pkg_allergy", title: "خريطة الحساسية" },
-  { id: "pkg_digest", title: "خريطة الجهاز الهضمي" },
-  { id: "pkg_full", title: "الباقة الجينية الشاملة" },
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
-  { id: "main_menu", title: "القائمة الرئيسية" }
-];
-
-const packageSubMenu = [
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
-  { id: "back_packages", title: "العودة لقائمة الباقات" },
-  { id: "main_menu", title: "العودة للقائمة الرئيسية" }
-];
-
-const userState = {};
-const lastSelectedPackage = {};
-
-const STATE = {
-  HUMAN_HANDOVER: "HUMAN_HANDOVER",
-  WAITING_CALL: "WAITING_CALL",
-  WAITING_FEEDBACK: "WAITING_FEEDBACK",
-  WAITING_WHATSAPP: "WAITING_WHATSAPP"
-};
-
-// ================== WEBHOOK ==================
-app.get("/", (req, res) => res.send("OK"));
+/* ================= WEBHOOK ================= */
+app.get("/", (_, res) => res.send("OK"));
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
@@ -139,15 +112,16 @@ app.post("/webhook", async (req, res) => {
   const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!msg) return;
 
-  const to = msg.from;
+  const from = msg.from;
 
+  /* ---- TEXT ---- */
   if (msg.type === "text") {
-    await sendToChatwoot(to, msg.text?.body || "رسالة");
+    await sendToChatwoot(from, msg.text?.body || "رسالة");
 
-    if (userState[to] === STATE.HUMAN_HANDOVER) return;
+    if (userState[from] === STATE.HUMAN_HANDOVER) return;
 
     await sendText(
-      to,
+      from,
 `أهلاً بك في جيناتك 🌱
 مستعد تتعرّف على جسمك لأول مرة؟ ✨
 
@@ -156,10 +130,11 @@ app.post("/webhook", async (req, res) => {
 عشان يشوفك بأتم صحة وعافية 💙`
     );
 
-    await sendList(to, welcomeMenuText, mainMenu);
+    await sendList(from, welcomeMenuText, mainMenu);
     return;
   }
 
+  /* ---- INTERACTIVE ---- */
   if (msg.type !== "interactive") return;
 
   const id =
@@ -168,25 +143,28 @@ app.post("/webhook", async (req, res) => {
 
   if (!id) return;
 
-  await sendToChatwoot(to, `اختيار المستخدم: ${id}`);
+  await sendToChatwoot(from, `اختيار المستخدم: ${id}`);
 
   if (id === "main_menu") {
-    delete userState[to];
-    await sendList(to, welcomeMenuText, mainMenu);
+    delete userState[from];
+    await sendList(from, welcomeMenuText, mainMenu);
     return;
   }
 
-  if (id === "packages" || id === "back_packages") {
-    await sendList(to, "*تعرّف على الباقات*", packagesMenu);
+  if (id === "packages") {
+    await sendList(from, "*تعرّف على الباقات*", [
+      { id: "pkg_afiya", title: "العافية 360 – التغذية" },
+      { id: "pkg_beauty", title: "جينات الجمال" },
+      { id: "pkg_psych", title: "الانسجام النفسي" },
+      { id: "pkg_allergy", title: "خريطة الحساسية" },
+      { id: "pkg_digest", title: "الجهاز الهضمي" },
+      { id: "pkg_full", title: "الباقة الشاملة" },
+      { id: "main_menu", title: "القائمة الرئيسية" }
+    ]);
     return;
   }
-
-  // ⬅️ ALL YOUR PACKAGE / ABOUT / WHY / STEPS / AFTER
-  // ⬅️ LOGIC REMAINS EXACTLY AS YOU SENT
-  // ⬅️ (No functional changes made beyond Chatwoot fixes)
-
 });
 
-// ================== SERVER ==================
+/* ================= SERVER ================= */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on", PORT));
+app.listen(PORT, () => console.log("Bot running on port", PORT));
