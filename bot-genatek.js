@@ -1,3 +1,48 @@
+const express = require("express");
+const fetch = require("node-fetch");
+
+const app = express();
+app.use(express.json());
+
+const API_URL = "https://waba-v2.360dialog.io/messages";
+const API_KEY = process.env.DIALOG360_API_KEY;
+
+async function send(payload) {
+  await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "D360-API-KEY": API_KEY
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function sendText(to, body) {
+  await send({
+    messaging_product: "whatsapp",
+    to,
+    type: "text",
+    text: { body }
+  });
+}
+
+async function sendList(to, bodyText, rows) {
+  await send({
+    messaging_product: "whatsapp",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: { text: bodyText },
+      action: {
+        button: "اختر من القائمة",
+        sections: [{ rows }]
+      }
+    }
+  });
+}
+
 async function sendToChatwoot(phone, text) {
   const convoRes = await fetch(
     "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations",
@@ -8,11 +53,39 @@ async function sendToChatwoot(phone, text) {
         api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
       },
       body: JSON.stringify({
-  inbox_id: 3,
-  source_id: `whatsapp_${phone}`
-})
+        inbox_id: 3,
+        source_id: `whatsapp_${phone}`
+      })
     }
   );
+
+  const convo = await convoRes.json();
+  if (!convo.id) return;
+
+  await fetch(
+    `https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations/${convo.id}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+      },
+      body: JSON.stringify({
+        content: text,
+        message_type: "incoming"
+      })
+    }
+  );
+}
+
+app.get("/", (req, res) => {
+  res.send("OK");
+});
+
+app.post("/chatwoot", (req, res) => {
+  res.sendStatus(200);
+});
+
 
 
 const express = require("express");
