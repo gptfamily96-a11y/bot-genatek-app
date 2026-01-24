@@ -24,7 +24,34 @@ async function sendToChatwoot(phone, text) {
 
 const express = require("express");
 
-const { setState, getState, clearState, setPackage, getPackage, logToSheet } = require("./storage");
+// ===== TEMP STATE (NO REDIS / NO GOOGLE) =====
+const memoryState = {};
+const memoryPackage = {};
+
+async function setState(phone, state) {
+  memoryState[phone] = state;
+}
+
+async function getState(phone) {
+  return memoryState[phone] || null;
+}
+
+async function clearState(phone) {
+  delete memoryState[phone];
+}
+
+async function setPackage(phone, pkg) {
+  memoryPackage[phone] = pkg;
+}
+
+async function getPackage(phone) {
+  return memoryPackage[phone] || null;
+}
+
+async function logToSheet() {
+  // disabled (no google sheet)
+}
+
 
 
 const app = express();
