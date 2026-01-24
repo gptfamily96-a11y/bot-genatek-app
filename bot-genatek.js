@@ -6,7 +6,7 @@ async function sendToChatwoot(phone, text) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api_access_token": "TAzD9TtMHVsWAJ759SNRNpAE"
+          "Authorization": "Bearer TAzD9TtMHVsWAJ759SNRNpAE"
         },
         body: JSON.stringify({
           content: text,
@@ -23,6 +23,7 @@ async function sendToChatwoot(phone, text) {
     console.log("CHATWOOT ERROR:", e.message);
   }
 }
+
 
 
 const express = require("express");
