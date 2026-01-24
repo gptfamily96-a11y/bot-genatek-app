@@ -122,12 +122,12 @@ const userState = {};
 const lastSelectedPackage = {};
 
 const STATE = {
-  NONE: "none",
-  WAITING_CALL: "waiting_call",
-  WAITING_FEEDBACK: "waiting_feedback",
-  WAITING_WHATSAPP: "waiting_whatsapp",
-  HUMAN_HANDOVER: "human_handover"
+  HUMAN_HANDOVER: "HUMAN_HANDOVER",
+  WAITING_CALL: "WAITING_CALL",
+  WAITING_FEEDBACK: "WAITING_FEEDBACK",
+  WAITING_WHATSAPP: "WAITING_WHATSAPP"
 };
+
 
 
 const startMenu = [
@@ -194,7 +194,8 @@ if (msg.type === "text") {
       "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = "HUMAN_HANDOVER";
+    userState[msg.from] = STATE.HUMAN_HANDOVER;
+
     return;
   }
 
@@ -208,7 +209,8 @@ if (msg.type === "text") {
       "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = "HUMAN_HANDOVER";
+    userState[msg.from] = STATE.HUMAN_HANDOVER;
+
     return;
   }
 
@@ -222,7 +224,8 @@ if (msg.type === "text") {
       "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = "HUMAN_HANDOVER";
+    userState[msg.from] = STATE.HUMAN_HANDOVER;
+
     return;
   }
 
