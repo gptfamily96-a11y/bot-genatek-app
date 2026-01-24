@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -63,13 +62,6 @@ app.post("/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT);
 
-
-
-
-const express = require("express");
-
-const app = express();
-app.use(express.json());
 
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
