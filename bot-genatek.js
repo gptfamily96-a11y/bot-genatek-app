@@ -1,6 +1,6 @@
 async function sendToChatwoot(phone, text) {
   await fetch(
-    "https://chatwoot-app-lzpe.onrender.com/api/v1/inboxes/RqDXVMgjx1dpFZwQ8i4M4GJh/messages",
+    "https://chatwoot-app-lzpe.onrender.com/api/v1/inboxes/RqPuqnA7RbcSFdPo2Jv44mEo/messages",
     {
       method: "POST",
       headers: {
