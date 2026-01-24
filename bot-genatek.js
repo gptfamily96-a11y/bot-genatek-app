@@ -1,20 +1,29 @@
 async function sendToChatwoot(phone, text) {
-  await fetch(
-    "https://chatwoot-app-lzpe.onrender.com/api/v1/inboxes/RqPuqnA7RbcSFdPo2Jv44mEo/messages",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api_access_token": "TAzD9TtMHVsWAJ759SNRNpAE"
-      },
-      body: JSON.stringify({
-        content: text,
-        sender: {
-          phone_number: phone
-        }
-      })
-    }
-  );
+  try {
+    const res = await fetch(
+      "https://chatwoot-app-lzpe.onrender.com/api/v1/inboxes/RqPuqnA7RbcSFdPo2Jv44mEo/messages",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api_access_token": "TAzD9TtMHVsWAJ759SNRNpAE"
+        },
+        body: JSON.stringify({
+          content: text,
+          sender: {
+            phone_number: phone
+          }
+        })
+      }
+    );
+
+    const data = await res.text();
+    console.log("CHATWOOT STATUS:", res.status);
+    console.log("CHATWOOT RESPONSE:", data);
+
+  } catch (err) {
+    console.log("CHATWOOT ERROR:", err.message);
+  }
 }
 
 
