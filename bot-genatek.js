@@ -1,17 +1,17 @@
 async function sendToChatwoot(phone, text) {
   try {
     const res = await fetch(
-      "https://app.chatwoot.com/api/v1/accounts/149507/inboxes/ZjFKhoMY7Yr2i7mUww6T1134/messages",
+      "https://app.chatwoot.com/api/v1/inboxes/DQ1mXro7vP1MiqADzFuQg78/messages",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer uxy3MR9N7ZSjQBFJRRzUgcZ6"
+          "api_access_token": process.env.CHATWOOT_API_TOKEN
         },
         body: JSON.stringify({
           content: text,
           sender: {
-            phone_number: phone
+            identifier: phone
           }
         })
       }
@@ -23,7 +23,6 @@ async function sendToChatwoot(phone, text) {
     console.log("CHATWOOT ERROR:", e.message);
   }
 }
-
 
 const express = require("express");
 
