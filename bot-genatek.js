@@ -4,44 +4,7 @@ const fetch = require("node-fetch");
 const app = express();
 app.use(express.json());
 
-const API_URL = "https://waba-v2.360dialog.io/messages";
-const API_KEY = process.env.DIALOG360_API_KEY;
-
-async function send(payload) {
-  await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "D360-API-KEY": API_KEY
-    },
-    body: JSON.stringify(payload)
-  });
-}
-
-async function sendText(to, body) {
-  await send({
-    messaging_product: "whatsapp",
-    to,
-    type: "text",
-    text: { body }
-  });
-}
-
-async function sendList(to, bodyText, rows) {
-  await send({
-    messaging_product: "whatsapp",
-    to,
-    type: "interactive",
-    interactive: {
-      type: "list",
-      body: { text: bodyText },
-      action: {
-        button: "اختر من القائمة",
-        sections: [{ rows }]
-      }
-    }
-  });
-}
+const CHATWOOT_TOKEN = "TAzD9TtMHVsWAJ759SNRNpAE";
 
 async function sendToChatwoot(phone, text) {
   const convoRes = await fetch(
@@ -50,7 +13,7 @@ async function sendToChatwoot(phone, text) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+        api_access_token: CHATWOOT_TOKEN
       },
       body: JSON.stringify({
         inbox_id: 3,
@@ -68,7 +31,7 @@ async function sendToChatwoot(phone, text) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+        api_access_token: CHATWOOT_TOKEN
       },
       body: JSON.stringify({
         content: text,
@@ -85,6 +48,21 @@ app.get("/", (req, res) => {
 app.post("/chatwoot", (req, res) => {
   res.sendStatus(200);
 });
+
+app.post("/webhook", async (req, res) => {
+  res.sendStatus(200);
+
+  const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+  if (!msg) return;
+
+  if (msg.type !== "text") return;
+
+  await sendToChatwoot(msg.from, msg.text?.body || "رسالة");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT);
+
 
 
 
