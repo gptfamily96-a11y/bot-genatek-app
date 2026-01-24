@@ -1,5 +1,4 @@
 const express = require("express");
-const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -7,27 +6,28 @@ app.use(express.json());
 /* ================== CHATWOOT ================== */
 async function sendToChatwoot(phone, text) {
   try {
-    const url = `https://app.chatwoot.com/api/v1/accounts/${process.env.CHATWOOT_ACCOUNT_ID}/inboxes/${process.env.CHATWOOT_INBOX_ID}/messages`;
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api_access_token": process.env.CHATWOOT_API_TOKEN
-      },
-      body: JSON.stringify({
-        content: text,
-        message_type: "incoming",
-        contact: {
-          identifier: phone,
-          phone_number: phone
-        }
-      })
-    });
+    const res = await fetch(
+      `https://app.chatwoot.com/api/v1/accounts/${process.env.CHATWOOT_ACCOUNT_ID}/inboxes/${process.env.CHATWOOT_INBOX_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api_access_token": process.env.CHATWOOT_API_TOKEN
+        },
+        body: JSON.stringify({
+          content: text,
+          message_type: "incoming",
+          contact: {
+            identifier: phone,
+            phone_number: phone
+          }
+        })
+      }
+    );
 
     console.log("CHATWOOT STATUS:", res.status);
-  } catch (err) {
-    console.error("CHATWOOT ERROR:", err.message);
+  } catch (e) {
+    console.log("CHATWOOT ERROR:", e.message);
   }
 }
 
@@ -71,24 +71,67 @@ async function sendList(to, bodyText, rows) {
   });
 }
 
-/* ================== STATE ================== */
-const userState = {};
-const STATE = {
-  HUMAN_HANDOVER: "HUMAN_HANDOVER"
-};
-
 /* ================== MENUS ================== */
-const welcomeMenuText = `لا تتردد في أي سؤال يخطر على بالك،
+const welcomeMenuText =
+`لا تتردد في أي سؤال يخطر على بالك،
 وتقدر تتعرّف علينا أكثر
 من خلال القوائم التالية:`;
 
 const mainMenu = [
   { id: "about", title: "من نحن – جيناتك" },
-  { id: "packages", title: "تعرّف على الباقات" }
+  { id: "what", title: "ما هو التحليل الجيني؟" },
+  { id: "why", title: "لماذا تحتاج التحليل؟" },
+  { id: "steps", title: "خطوات رحلتك معنا" },
+  { id: "after", title: "ماذا بعد النتائج" },
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
+const subMenuAbout = [
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "steps", title: "خطوات رحلتك معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const subMenuSteps = [
+  { id: "packages", title: "تعرّف على الباقات" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const packagesMenu = [
+  { id: "pkg_afiya", title: "العافية 360 – التغذية" },
+  { id: "pkg_beauty", title: "جينات الجمال والتميّز" },
+  { id: "pkg_psych", title: "جينات الانسجام النفسي" },
+  { id: "pkg_allergy", title: "خريطة الحساسية" },
+  { id: "pkg_digest", title: "خريطة الجهاز الهضمي" },
+  { id: "pkg_full", title: "الباقة الجينية الشاملة" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
+const packageSubMenu = [
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "back_packages", title: "العودة لقائمة الباقات" },
+  { id: "main_menu", title: "العودة للقائمة الرئيسية" }
+];
+
+/* ================== STATE ================== */
+const userState = {};
+const lastSelectedPackage = {};
+
+const STATE = {
+  HUMAN_HANDOVER: "HUMAN_HANDOVER",
+  WAITING_CALL: "WAITING_CALL",
+  WAITING_FEEDBACK: "WAITING_FEEDBACK",
+  WAITING_WHATSAPP: "WAITING_WHATSAPP"
+};
+
 /* ================== ROUTES ================== */
-app.get("/", (req, res) => res.send("OK"));
+app.get("/", (req, res) => {
+  res.send("OK");
+});
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
@@ -96,47 +139,54 @@ app.post("/webhook", async (req, res) => {
   const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!msg) return;
 
-  const from = msg.from;
+  const to = msg.from;
 
-  /* ---- TEXT MESSAGE ---- */
   if (msg.type === "text") {
-    await sendToChatwoot(from, msg.text.body);
 
-    if (userState[from] === STATE.HUMAN_HANDOVER) return;
+    await sendToChatwoot(to, msg.text?.body || "رسالة");
+
+    if (userState[to] === STATE.HUMAN_HANDOVER) return;
 
     await sendText(
-      from,
-      `أهلاً بك في جيناتك 🌱
-مستعد تتعرّف على جسمك لأول مرة؟`
+      to,
+`أهلاً بك في جيناتك 🌱
+مستعد تتعرّف على جسمك لأول مرة؟ ✨`
     );
 
-    await sendList(from, welcomeMenuText, mainMenu);
+    await sendList(to, welcomeMenuText, mainMenu);
     return;
   }
 
-  /* ---- INTERACTIVE ---- */
   if (msg.type !== "interactive") return;
 
-  const id =
+  let id =
     msg.interactive?.list_reply?.id ||
     msg.interactive?.button_reply?.id;
 
   if (!id) return;
 
-  await sendToChatwoot(from, `اختيار المستخدم: ${id}`);
+  await sendToChatwoot(to, `اختيار المستخدم: ${id}`);
 
-  if (id === "about") {
-    await sendText(from, "جيناتك علامة سعودية متخصصة في الطب الجيني");
+  if (id === "main_menu") {
+    delete userState[to];
+    await sendList(to, welcomeMenuText, mainMenu);
     return;
   }
 
-  if (id === "packages") {
-    userState[from] = STATE.HUMAN_HANDOVER;
-    await sendText(from, "سيتم تحويلك لمستشار مختص");
+  if (id === "packages" || id === "back_packages") {
+    await sendList(to, "*تعرّف على الباقات*", packagesMenu);
+    return;
+  }
+
+  if (id === "start") {
+    userState[to] = STATE.HUMAN_HANDOVER;
+    await sendText(to, "تم تحويلك لمستشار مختص 👩‍⚕️");
     return;
   }
 });
 
 /* ================== SERVER ================== */
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Bot running on", PORT));
+app.listen(PORT, () => {
+  console.log("Bot running on port", PORT);
+});
