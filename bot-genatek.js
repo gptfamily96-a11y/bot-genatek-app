@@ -9,17 +9,28 @@ async function sendToChatwoot(phone, text) {
       },
       body: JSON.stringify({
         inbox_id: 1,
-        source_id: phone,
-        messages: [
-          {
-            content: text,
-            message_type: "incoming"
-          }
-        ]
+        source_id: phone
+      })
+    }
+  );
+
+  await fetch(
+    "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/messages",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+      },
+      body: JSON.stringify({
+        content: text,
+        message_type: "incoming",
+        source_id: phone
       })
     }
   );
 }
+
 
 
 const express = require("express");
@@ -196,15 +207,14 @@ app.post("/webhook", async (req, res) => {
 const state = await getState(to);
 
 
-if (msg.type === "text") {
+if (state === STATE.HUMAN_HANDOVER) {
+  await sendToChatwoot(
+    msg.from,
+    msg.text?.body || "رسالة"
+  );
+  return;
+}
 
-  if (state === STATE.HUMAN_HANDOVER) {
-    await sendToChatwoot(
-      msg.from,
-      msg.text?.body || "رسالة"
-    );
-    return;
-  }
 
   if (state === STATE.WAITING_CALL) {
     await sendToChatwoot(
