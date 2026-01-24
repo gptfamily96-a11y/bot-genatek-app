@@ -1,5 +1,5 @@
 async function sendToChatwoot(phone, text) {
-  await fetch(
+  const conv = await fetch(
     "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations",
     {
       method: "POST",
@@ -12,10 +12,10 @@ async function sendToChatwoot(phone, text) {
         source_id: phone
       })
     }
-  );
+  ).then(r => r.json());
 
   await fetch(
-    "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/messages",
+    `https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations/${conv.id}/messages`,
     {
       method: "POST",
       headers: {
@@ -24,8 +24,7 @@ async function sendToChatwoot(phone, text) {
       },
       body: JSON.stringify({
         content: text,
-        message_type: "incoming",
-        source_id: phone
+        message_type: "incoming"
       })
     }
   );
