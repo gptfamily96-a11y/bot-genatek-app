@@ -1,5 +1,5 @@
 async function sendToChatwoot(phone, text) {
-  const conv = await fetch(
+  await fetch(
     "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations",
     {
       method: "POST",
@@ -9,60 +9,20 @@ async function sendToChatwoot(phone, text) {
       },
       body: JSON.stringify({
         inbox_id: 1,
-        source_id: phone
-      })
-    }
-  ).then(r => r.json());
-
-  await fetch(
-    `https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations/${conv.id}/messages`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
-      },
-      body: JSON.stringify({
-        content: text,
-        message_type: "incoming"
+        source_id: phone,
+        messages: [
+          {
+            content: text,
+            message_type: "incoming"
+          }
+        ]
       })
     }
   );
 }
 
 
-
 const express = require("express");
-
-// ===== TEMP STATE (NO REDIS / NO GOOGLE) =====
-const memoryState = {};
-const memoryPackage = {};
-
-async function setState(phone, state) {
-  memoryState[phone] = state;
-}
-
-async function getState(phone) {
-  return memoryState[phone] || null;
-}
-
-async function clearState(phone) {
-  delete memoryState[phone];
-}
-
-async function setPackage(phone, pkg) {
-  memoryPackage[phone] = pkg;
-}
-
-async function getPackage(phone) {
-  return memoryPackage[phone] || null;
-}
-
-async function logToSheet() {
-  // disabled (no google sheet)
-}
-
-
 
 const app = express();
 app.use(express.json());
@@ -151,6 +111,9 @@ const packageSubMenu = [
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
+const userState = {};
+
+const lastSelectedPackage = {};
 
 const STATE = {
   NONE: "none",
@@ -203,19 +166,19 @@ app.post("/webhook", async (req, res) => {
   if (!msg) return;
 
   const to = msg.from;
-const state = await getState(to);
 
 
-if (state === STATE.HUMAN_HANDOVER) {
-  await sendToChatwoot(
-    msg.from,
-    msg.text?.body || "رسالة"
-  );
-  return;
-}
+if (msg.type === "text") {
 
+  if (userState[msg.from] === "HUMAN_HANDOVER") {
+    await sendToChatwoot(
+      msg.from,
+      msg.text?.body || "رسالة"
+    );
+    return;
+  }
 
-  if (state === STATE.WAITING_CALL) {
+  if (userState[msg.from] === STATE.WAITING_CALL) {
     await sendToChatwoot(
       msg.from,
       msg.text?.body || "رسالة"
@@ -225,12 +188,11 @@ if (state === STATE.HUMAN_HANDOVER) {
       "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    await setState(to, STATE.HUMAN_HANDOVER);
-await logToSheet(to, "", "تحويل للدعم");
+    userState[msg.from] = "HUMAN_HANDOVER";
     return;
   }
 
-  if (state === STATE.WAITING_FEEDBACK) {
+  if (userState[msg.from] === STATE.WAITING_FEEDBACK) {
     await sendToChatwoot(
       msg.from,
       msg.text?.body || "رسالة"
@@ -240,12 +202,11 @@ await logToSheet(to, "", "تحويل للدعم");
       "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    await setState(to, STATE.HUMAN_HANDOVER);
-await logToSheet(to, "", "تحويل للدعم");
+    userState[msg.from] = "HUMAN_HANDOVER";
     return;
   }
 
-  if (state === STATE.WAITING_WHATSAPP) {
+  if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
     await sendToChatwoot(
       msg.from,
       msg.text?.body || "رسالة"
@@ -255,8 +216,7 @@ await logToSheet(to, "", "تحويل للدعم");
       "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
     await sendList(msg.from, welcomeMenuText, mainMenu);
-    await setState(to, STATE.HUMAN_HANDOVER);
-await logToSheet(to, "", "تحويل للدعم");
+    userState[msg.from] = "HUMAN_HANDOVER";
     return;
   }
 
@@ -276,8 +236,13 @@ await logToSheet(to, "", "تحويل للدعم");
   );
 
   await sendList(msg.from, welcomeMenuText, mainMenu);
-await logToSheet(to, "", "فتح محادثة");
   return;
+}
+
+if (
+  msg.type === "interactive" &&
+  userState[msg.from] === STATE.HUMAN_HANDOVER
+) {
 }
 
 
@@ -291,7 +256,7 @@ if (!id) return;
 
 if (id === "package_details") {
 
-  const pkgId = await getPackage(to);
+  const pkgId = lastSelectedPackage[to];
 
 
   if (!pkgId) {
@@ -346,8 +311,7 @@ if (id === "contact_consultant") {
 }
 
 if (id === "request_call") {
-  await setState(to, STATE.WAITING_CALL);
-  await logToSheet(to, "", "فتح محادثة - طلب مكالمة");
+  userState[to] = STATE.WAITING_CALL;
   await sendList(
     to,
 `سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة
@@ -357,20 +321,19 @@ if (id === "request_call") {
   return;
 }
 
-
 if (id === "whatsapp_chat") {
-  await setState(to, STATE.WAITING_WHATSAPP);
+  userState[to] = STATE.WAITING_WHATSAPP;
   await sendList(
     to,
 `يسعدنا سماع استفسارك
-وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء`,
+وسيتم الرد عليك من قبل أحد ممثلينا`,
     [{ id: "main_menu", title: "القائمة الرئيسية" }]
   );
   return;
 }
 
 if (id === "feedback") {
-  await setState(to, STATE.WAITING_FEEDBACK);
+  userState[to] = STATE.WAITING_FEEDBACK;
   await sendList(
     to,
 `يهمنا سماع رأيك
@@ -380,7 +343,6 @@ if (id === "feedback") {
   );
   return;
 }
-
 
 if (id.startsWith("buy_pkg_")) {
 
@@ -420,7 +382,7 @@ if (id.startsWith("buy_pkg_")) {
   const pkg = packageMap[id];
   if (!pkg) return;
 
-await setPackage(to, pkg.detailsId);
+  lastSelectedPackage[to] = pkg.detailsId;
 
   await sendList(
     to,
@@ -437,10 +399,9 @@ ${pkg.link}`,
 }
 
 
-if (id === "main_menu") {
-  await clearState(to);
-  await logToSheet(to, "", "فتح محادثة");
-  await sendList(to, welcomeMenuText, mainMenu);
+ if (id === "main_menu") {
+  delete userState[msg.from];
+  await sendList(msg.from, welcomeMenuText, mainMenu);
   return;
 }
 
