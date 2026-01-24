@@ -794,5 +794,3 @@ if (id === "pkg_full") {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT);
-
-الكود مايبين شي في تشات ووت 
