@@ -1,42 +1,31 @@
-async function sendToChatwoot(from, message) {
-  await fetch("http://localhost:3000/api/v1/inboxes/INBOX_ID/contacts", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api_access_token": "CHATWOOT_TOKEN"
-    },
-    body: JSON.stringify({
-      identifier: from,
-      name: from
-    })
-  });
-
-  await fetch("http://localhost:3000/api/v1/inboxes/INBOX_ID/conversations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api_access_token": "CHATWOOT_TOKEN"
-    },
-    body: JSON.stringify({
-      source_id: from
-    })
-  });
-
-  await fetch("http://localhost:3000/api/v1/conversations/${from}/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api_access_token": "CHATWOOT_TOKEN"
-    },
-    body: JSON.stringify({
-      content: message,
-      message_type: "incoming"
-    })
-  });
+async function sendToChatwoot(phone, text) {
+  await fetch(
+    "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+      },
+      body: JSON.stringify({
+        inbox_id: 1,
+        source_id: phone,
+        messages: [
+          {
+            content: text,
+            message_type: "incoming"
+          }
+        ]
+      })
+    }
+  );
 }
 
 
 const express = require("express");
+
+const { setState, getState, clearState, setPackage, getPackage, logToSheet } = require("./storage");
+
 
 const app = express();
 app.use(express.json());
@@ -125,16 +114,15 @@ const packageSubMenu = [
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
-const userState = {};
-
-const lastSelectedPackage = {};
 
 const STATE = {
   NONE: "none",
   WAITING_CALL: "waiting_call",
   WAITING_FEEDBACK: "waiting_feedback",
-  WAITING_WHATSAPP: "waiting_whatsapp"
+  WAITING_WHATSAPP: "waiting_whatsapp",
+  HUMAN_HANDOVER: "human_handover"
 };
+
 
 const startMenu = [
   { id: "start_choose", title: "اختر الباقة المناسبة" },
@@ -178,53 +166,84 @@ app.post("/webhook", async (req, res) => {
   if (!msg) return;
 
   const to = msg.from;
+const state = await getState(to);
 
-await sendToChatwoot(to, msg.text?.body || "رسالة");
 
-  if (msg.type === "text") {
+if (msg.type === "text") {
 
-  if (userState[to] === STATE.WAITING_CALL) {
-    delete userState[to];
+  if (state === STATE.HUMAN_HANDOVER) {
+    await sendToChatwoot(
+      msg.from,
+      msg.text?.body || "رسالة"
+    );
+    return;
+  }
+
+  if (state === STATE.WAITING_CALL) {
+    await sendToChatwoot(
+      msg.from,
+      msg.text?.body || "رسالة"
+    );
     await sendText(
-      to,
+      msg.from,
       "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
     );
-    await sendList(to, welcomeMenuText, mainMenu);
+    await sendList(msg.from, welcomeMenuText, mainMenu);
+    await setState(to, STATE.HUMAN_HANDOVER);
+await logToSheet(to, "", "تحويل للدعم");
     return;
   }
 
-  if (userState[to] === STATE.WAITING_FEEDBACK) {
-    delete userState[to];
+  if (state === STATE.WAITING_FEEDBACK) {
+    await sendToChatwoot(
+      msg.from,
+      msg.text?.body || "رسالة"
+    );
     await sendText(
-      to,
+      msg.from,
       "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
     );
-    await sendList(to, welcomeMenuText, mainMenu);
+    await sendList(msg.from, welcomeMenuText, mainMenu);
+    await setState(to, STATE.HUMAN_HANDOVER);
+await logToSheet(to, "", "تحويل للدعم");
     return;
   }
 
- if (userState[to] === STATE.WAITING_WHATSAPP) {
-  delete userState[to];
-  await sendText(
-    to,
-    "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
-  );
-  await sendList(to, welcomeMenuText, mainMenu);
-  return;
-}
-
+  if (state === STATE.WAITING_WHATSAPP) {
+    await sendToChatwoot(
+      msg.from,
+      msg.text?.body || "رسالة"
+    );
     await sendText(
-      to,
+      msg.from,
+      "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+    );
+    await sendList(msg.from, welcomeMenuText, mainMenu);
+    await setState(to, STATE.HUMAN_HANDOVER);
+await logToSheet(to, "", "تحويل للدعم");
+    return;
+  }
+
+  await sendToChatwoot(
+    msg.from,
+    msg.text?.body || "رسالة"
+  );
+
+  await sendText(
+    msg.from,
 `أهلاً بك في جيناتك 🌱
 مستعد تتعرّف على جسمك لأول مرة؟ ✨
 
 جيناتك يعرف حيرتك مع دوامة الأعراض،
 وفريقنا الطبي المتخصص موجود
 عشان يشوفك بأتم صحة وعافية 💙`
-    );
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
+  );
+
+  await sendList(msg.from, welcomeMenuText, mainMenu);
+await logToSheet(to, "", "فتح محادثة");
+  return;
+}
+
 
   if (msg.type !== "interactive") return;
   let id =
@@ -236,7 +255,7 @@ if (!id) return;
 
 if (id === "package_details") {
 
-  const pkgId = lastSelectedPackage[to];
+  const pkgId = await getPackage(to);
 
 
   if (!pkgId) {
@@ -291,7 +310,8 @@ if (id === "contact_consultant") {
 }
 
 if (id === "request_call") {
-  userState[to] = STATE.WAITING_CALL;
+  await setState(to, STATE.WAITING_CALL);
+  await logToSheet(to, "", "فتح محادثة - طلب مكالمة");
   await sendList(
     to,
 `سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة
@@ -301,19 +321,20 @@ if (id === "request_call") {
   return;
 }
 
+
 if (id === "whatsapp_chat") {
-  userState[to] = STATE.WAITING_WHATSAPP;
+  await setState(to, STATE.WAITING_WHATSAPP);
   await sendList(
     to,
 `يسعدنا سماع استفسارك
-وسيتم الرد عليك من قبل أحد ممثلينا`,
+وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء`,
     [{ id: "main_menu", title: "القائمة الرئيسية" }]
   );
   return;
 }
 
 if (id === "feedback") {
-  userState[to] = STATE.WAITING_FEEDBACK;
+  await setState(to, STATE.WAITING_FEEDBACK);
   await sendList(
     to,
 `يهمنا سماع رأيك
@@ -323,6 +344,7 @@ if (id === "feedback") {
   );
   return;
 }
+
 
 if (id.startsWith("buy_pkg_")) {
 
@@ -362,7 +384,7 @@ if (id.startsWith("buy_pkg_")) {
   const pkg = packageMap[id];
   if (!pkg) return;
 
-  lastSelectedPackage[to] = pkg.detailsId;
+await setPackage(to, pkg.detailsId);
 
   await sendList(
     to,
@@ -379,10 +401,13 @@ ${pkg.link}`,
 }
 
 
-  if (id === "main_menu") {
-    await sendList(to, welcomeMenuText, mainMenu);
-    return;
-  }
+if (id === "main_menu") {
+  await clearState(to);
+  await logToSheet(to, "", "فتح محادثة");
+  await sendList(to, welcomeMenuText, mainMenu);
+  return;
+}
+
 
   if (id === "packages" || id === "back_packages") {
     await sendList(
