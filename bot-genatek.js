@@ -8,31 +8,11 @@ async function sendToChatwoot(phone, text) {
         api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
       },
       body: JSON.stringify({
-        inbox_id: 2,
-        source_id: `whatsapp_${phone}`
+        inbox_id: 1,
+        source_id: phone
       })
     }
   );
-
-  const convo = await convoRes.json();
-  if (!convo.id) return;
-
-  await fetch(
-    `https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations/${convo.id}/messages`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
-      },
-      body: JSON.stringify({
-        content: text,
-        message_type: "incoming"
-      })
-    }
-  );
-}
-
 
 
 const express = require("express");
