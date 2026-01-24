@@ -1,6 +1,9 @@
-const express = require("express");
-const fetch = require("node-fetch"); // ✅ REQUIRED
+/******************** REQUIRED FIX ********************/
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+/*****************************************************/
 
+const express = require("express");
 const app = express();
 app.use(express.json());
 
@@ -8,7 +11,7 @@ app.use(express.json());
 async function sendToChatwoot(phone, text) {
   try {
     const res = await fetch(
-      `https://app.chatwoot.com/api/v1/inboxes/${process.env.CHATWOOT_INBOX_IDENTIFIER}/messages`,
+      `https://app.chatwoot.com/api/v1/accounts/${process.env.CHATWOOT_ACCOUNT_ID}/inboxes/${process.env.CHATWOOT_INBOX_ID}/messages`,
       {
         method: "POST",
         headers: {
@@ -17,18 +20,18 @@ async function sendToChatwoot(phone, text) {
         },
         body: JSON.stringify({
           content: text,
-          sender: {
-            identifier: phone
+          message_type: "incoming",
+          contact: {
+            identifier: phone,
+            phone_number: phone
           }
         })
       }
     );
 
-    const data = await res.text();
     console.log("CHATWOOT STATUS:", res.status);
-    console.log("CHATWOOT RESPONSE:", data);
   } catch (e) {
-    console.log("CHATWOOT ERROR:", e.message);
+    console.error("CHATWOOT ERROR:", e.message);
   }
 }
 
@@ -73,8 +76,7 @@ async function sendList(to, bodyText, rows) {
 }
 
 /* ================== MENUS ================== */
-const welcomeMenuText =
-`لا تتردد في أي سؤال يخطر على بالك،
+const welcomeMenuText = `لا تتردد في أي سؤال يخطر على بالك،
 وتقدر تتعرّف علينا أكثر
 من خلال القوائم التالية:`;
 
@@ -89,6 +91,17 @@ const mainMenu = [
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
 
+const packagesMenu = [
+  { id: "pkg_afiya", title: "العافية 360 – التغذية" },
+  { id: "pkg_beauty", title: "جينات الجمال والتميّز" },
+  { id: "pkg_psych", title: "جينات الانسجام النفسي" },
+  { id: "pkg_allergy", title: "خريطة الحساسية" },
+  { id: "pkg_digest", title: "خريطة الجهاز الهضمي" },
+  { id: "pkg_full", title: "الباقة الجينية الشاملة" },
+  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "main_menu", title: "القائمة الرئيسية" }
+];
+
 /* ================== STATE ================== */
 const userState = {};
 const STATE = {
@@ -96,7 +109,9 @@ const STATE = {
 };
 
 /* ================== ROUTES ================== */
-app.get("/", (_, res) => res.send("OK"));
+app.get("/", (req, res) => {
+  res.send("OK");
+});
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
@@ -106,16 +121,15 @@ app.post("/webhook", async (req, res) => {
 
   const to = msg.from;
 
+  /* -------- TEXT MESSAGE -------- */
   if (msg.type === "text") {
-
-    // ✅ Send incoming WhatsApp message to Chatwoot
     await sendToChatwoot(to, msg.text?.body || "رسالة");
 
     if (userState[to] === STATE.HUMAN_HANDOVER) return;
 
     await sendText(
       to,
-`أهلاً بك في جيناتك 🌱
+      `أهلاً بك في جيناتك 🌱
 مستعد تتعرّف على جسمك لأول مرة؟ ✨`
     );
 
@@ -123,6 +137,7 @@ app.post("/webhook", async (req, res) => {
     return;
   }
 
+  /* -------- INTERACTIVE -------- */
   if (msg.type !== "interactive") return;
 
   const id =
@@ -131,12 +146,23 @@ app.post("/webhook", async (req, res) => {
 
   if (!id) return;
 
-  // Log selections to Chatwoot
   await sendToChatwoot(to, `اختيار المستخدم: ${id}`);
+
+  if (id === "main_menu") {
+    delete userState[to];
+    await sendList(to, welcomeMenuText, mainMenu);
+    return;
+  }
+
+  if (id === "packages") {
+    await sendList(to, "*تعرّف على الباقات*", packagesMenu);
+    return;
+  }
 
   if (id === "start") {
     userState[to] = STATE.HUMAN_HANDOVER;
     await sendText(to, "تم تحويلك لمستشار مختص 👩‍⚕️");
+    return;
   }
 });
 
