@@ -1,25 +1,22 @@
 async function sendToChatwoot(phone, text) {
   await fetch(
-    "https://chatwoot-app-lzpe.onrender.com/api/v1/accounts/1/conversations",
+    "https://chatwoot-app-lzpe.onrender.com/api/v1/inboxes/RqDXVMgjx1dpFZwQ8i4M4GJh/messages",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
+        "api_access_token": "TAzD9TtMHVsWAJ759SNRNpAE"
       },
       body: JSON.stringify({
-        inbox_id: 1,
-        source_id: phone,
-        messages: [
-          {
-            content: text,
-            message_type: "incoming"
-          }
-        ]
+        content: text,
+        sender: {
+          phone_number: phone
+        }
       })
     }
   );
 }
+
 
 
 const express = require("express");
