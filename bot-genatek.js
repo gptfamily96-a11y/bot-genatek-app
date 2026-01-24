@@ -1,35 +1,36 @@
-/******************** REQUIRED FIX ********************/
+/******************** FETCH FIX (REQUIRED) ********************/
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
-/*****************************************************/
+/*************************************************************/
 
 const express = require("express");
 const app = express();
 app.use(express.json());
 
 /* ================== CHATWOOT ================== */
+const CHATWOOT_INBOX_IDENTIFIER = "DQ1mXro7vP1MiqADzFuQg78";
+
 async function sendToChatwoot(phone, text) {
   try {
     const res = await fetch(
-      `https://app.chatwoot.com/api/v1/accounts/${process.env.CHATWOOT_ACCOUNT_ID}/inboxes/${process.env.CHATWOOT_INBOX_ID}/messages`,
+      `https://app.chatwoot.com/api/v1/inboxes/${CHATWOOT_INBOX_IDENTIFIER}/messages`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api_access_token": process.env.CHATWOOT_API_TOKEN
+          "api_access_token": process.env.CHATWOOT_INBOX_API_TOKEN
         },
         body: JSON.stringify({
           content: text,
-          message_type: "incoming",
-          contact: {
-            identifier: phone,
-            phone_number: phone
+          sender: {
+            identifier: phone
           }
         })
       }
     );
 
     console.log("CHATWOOT STATUS:", res.status);
+    console.log(await res.text());
   } catch (e) {
     console.error("CHATWOOT ERROR:", e.message);
   }
@@ -121,7 +122,7 @@ app.post("/webhook", async (req, res) => {
 
   const to = msg.from;
 
-  /* -------- TEXT MESSAGE -------- */
+  /* ---------- TEXT MESSAGE ---------- */
   if (msg.type === "text") {
     await sendToChatwoot(to, msg.text?.body || "رسالة");
 
@@ -137,7 +138,7 @@ app.post("/webhook", async (req, res) => {
     return;
   }
 
-  /* -------- INTERACTIVE -------- */
+  /* ---------- INTERACTIVE ---------- */
   if (msg.type !== "interactive") return;
 
   const id =
