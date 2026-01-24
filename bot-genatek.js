@@ -8,9 +8,9 @@ async function sendToChatwoot(phone, text) {
         api_access_token: "TAzD9TtMHVsWAJ759SNRNpAE"
       },
       body: JSON.stringify({
-        inbox_id: 1,
-        source_id: phone
-      })
+  inbox_id: 3,
+  source_id: `whatsapp_${phone}`
+})
     }
   );
 
@@ -152,8 +152,9 @@ app.get("/", (req, res) => {
   res.send("OK");
 });
 
-app.post("/webhook", async (req, res) => {
+app.post("/chatwoot", (req, res) => {
   res.sendStatus(200);
+});
 
   const msg = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!msg) return;
