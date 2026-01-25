@@ -1,28 +1,19 @@
-async function sendToChatwoot(phone, text) {
-  try {
-    const res = await fetch(
-      "https://app.chatwoot.com/api/v1/inboxes/DQ1mXro7vP1MiqADzFuQg78/messages",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api_access_token": process.env.CHATWOOT_API_TOKEN
-        },
-        body: JSON.stringify({
-          content: text,
-          sender: {
-            identifier: phone
-          }
-        })
-      }
-    );
+async function forwardToSupport(phone, name, message) {
+  const body =
+    "📩 طلب دعم جديد\n\n" +
+    "👤 الاسم: " + name + "\n" +
+    "📱 الرقم: " + phone + "\n\n" +
+    "📝 الرسالة:\n" +
+    message;
 
-    console.log("CHATWOOT STATUS:", res.status);
-    console.log("CHATWOOT RESPONSE:", await res.text());
-  } catch (e) {
-    console.log("CHATWOOT ERROR:", e.message);
-  }
+  await send({
+    messaging_product: "whatsapp",
+    to: "966569527551",
+    type: "text",
+    text: { body }
+  });
 }
+
 
 const express = require("express");
 
@@ -180,50 +171,61 @@ if (msg.type === "text") {
     return;
   }
 
-  if (userState[msg.from] === STATE.WAITING_CALL) {
-    await sendToChatwoot(
-      msg.from,
-      msg.text?.body || "رسالة"
-    );
-    await sendText(
-      msg.from,
-      "سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
-    );
-    await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = STATE.HUMAN_HANDOVER;
+if (userState[msg.from] === STATE.WAITING_CALL) {
 
-    return;
-  }
+  await forwardToSupport(
+    msg.from,
+    msg.profile?.name || "غير مذكور",
+    msg.text?.body || "لا يوجد نص"
+  );
 
-  if (userState[msg.from] === STATE.WAITING_FEEDBACK) {
-    await sendToChatwoot(
-      msg.from,
-      msg.text?.body || "رسالة"
-    );
-    await sendText(
-      msg.from,
-      "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
-    );
-    await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = STATE.HUMAN_HANDOVER;
+  await sendText(
+    msg.from,
+    "تم استلام طلبك وسيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
+  );
 
-    return;
-  }
+  await sendList(msg.from, welcomeMenuText, mainMenu);
+  delete userState[msg.from];
+  return;
+}
 
-  if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
-    await sendToChatwoot(
-      msg.from,
-      msg.text?.body || "رسالة"
-    );
-    await sendText(
-      msg.from,
-      "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
-    );
-    await sendList(msg.from, welcomeMenuText, mainMenu);
-    userState[msg.from] = STATE.HUMAN_HANDOVER;
+if (userState[msg.from] === STATE.WAITING_FEEDBACK) {
 
-    return;
-  }
+  await forwardToSupport(
+    msg.from,
+    msg.profile?.name || "غير مذكور",
+    msg.text?.body || "لا يوجد نص"
+  );
+
+  await sendText(
+    msg.from,
+    "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+  );
+
+  await sendList(msg.from, welcomeMenuText, mainMenu);
+  delete userState[msg.from];
+  return;
+}
+
+
+if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
+
+  await forwardToSupport(
+    msg.from,
+    msg.profile?.name || "غير مذكور",
+    msg.text?.body || "لا يوجد نص"
+  );
+
+  await sendText(
+    msg.from,
+    "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
+  );
+
+  await sendList(msg.from, welcomeMenuText, mainMenu);
+  delete userState[msg.from];
+  return;
+}
+
 
   await sendToChatwoot(
     msg.from,
