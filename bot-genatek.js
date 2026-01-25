@@ -163,13 +163,6 @@ app.post("/webhook", async (req, res) => {
 
 if (msg.type === "text") {
 
-  if (userState[msg.from] === "HUMAN_HANDOVER") {
-    await sendToChatwoot(
-      msg.from,
-      msg.text?.body || "رسالة"
-    );
-    return;
-  }
 
 if (userState[msg.from] === STATE.WAITING_CALL) {
 
@@ -227,10 +220,6 @@ if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
 }
 
 
-  await sendToChatwoot(
-    msg.from,
-    msg.text?.body || "رسالة"
-  );
 
   await sendText(
     msg.from,
