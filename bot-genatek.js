@@ -1,6 +1,4 @@
 
-
-
 const express = require("express");
 
 const app = express();
@@ -216,6 +214,30 @@ app.post("/webhook", async (req, res) => {
 
 
 if (msg.type === "text") {
+if (!global.notifiedNumbers) {
+  global.notifiedNumbers = {};
+}
+
+if (!global.notifiedNumbers[msg.from]) {
+  global.notifiedNumbers[msg.from] = true;
+
+  await send({
+    messaging_product: "whatsapp",
+    to: "966536887516",
+    type: "text",
+    text: {
+      body:
+`🔔 بدء محادثة جديدة
+
+📞 رقم العميل:
+${msg.from}
+
+🕒 الوقت:
+${new Date().toLocaleString("ar-SA")}`
+    }
+  });
+}
+
 
   if (
     userState[msg.from] === STATE.WAITING_CALL ||
