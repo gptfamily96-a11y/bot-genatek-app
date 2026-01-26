@@ -395,32 +395,32 @@ if (id.startsWith("buy_pkg_")) {
   const packageMap = {
     buy_pkg_afiya: {
       name: "العافية 360 – التغذية",
-      link: "https://acl.com.sa/460/packages/16290?type=1",
+      link: "https://acl.sa/460/packages/16290?type=1",
       detailsId: "pkg_afiya"
     },
     buy_pkg_beauty: {
       name: "جينات الجمال والتميّز",
-      link: "https://www.acl.com.sa/460/packages/16292?type=1",
+      link: "https://acl.sa/460/packages/16292?type=1",
       detailsId: "pkg_beauty"
     },
     buy_pkg_psych: {
       name: "جينات الانسجام النفسي",
-      link: "https://www.acl.com.sa/460/packages/16295?type=1",
+      link: "https://acl.sa/460/packages/16295?type=1",
       detailsId: "pkg_psych"
     },
     buy_pkg_allergy: {
       name: "خريطة الحساسية",
-      link: "https://www.acl.com.sa/460/packages/16296?type=1",
+      link: "https://acl.sa/460/packages/16296?type=1",
       detailsId: "pkg_allergy"
     },
     buy_pkg_digest: {
       name: "خريطة الجهاز الهضمي",
-      link: "https://www.acl.com.sa/460/packages/16298?type=1",
+      link: "https://acl.sa/460/packages/16298?type=1",
       detailsId: "pkg_digest"
     },
     buy_pkg_full: {
       name: "الباقة الجينية الشاملة",
-      link: "https://www.acl.com.sa/460/packages/16300?type=1",
+      link: "https://acl.sa/460/packages/16300?type=1",
       detailsId: "pkg_full"
     }
   };
