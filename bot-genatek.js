@@ -1,18 +1,4 @@
-async function forwardToSupport(phone, name, message) {
-  const body =
-    "📩 طلب دعم جديد\n\n" +
-    "👤 الاسم: " + name + "\n" +
-    "📱 الرقم: " + phone + "\n\n" +
-    "📝 الرسالة:\n" +
-    message;
 
-  await send({
-    messaging_product: "whatsapp",
-    to: "966569527551",
-    type: "text",
-    text: { body }
-  });
-}
 
 
 const express = require("express");
@@ -71,9 +57,11 @@ const mainMenu = [
   { id: "steps", title: "خطوات رحلتك معنا" },
   { id: "after", title: "ماذا بعد النتائج" },
   { id: "packages", title: "تعرّف على الباقات" },
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "start", title: "ابدأ الآن" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "feedback", title: "الاقتراحات / الشكاوى" }
 ];
+
 
 const subMenuAbout = [
   { id: "packages", title: "تعرّف على الباقات" },
@@ -81,12 +69,15 @@ const subMenuAbout = [
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
+
 const subMenuSteps = [
   { id: "packages", title: "تعرّف على الباقات" },
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "start", title: "ابدأ الآن" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
+ 
 const packagesMenu = [
   { id: "pkg_afiya", title: "العافية 360 – التغذية" },
   { id: "pkg_beauty", title: "جينات الجمال والتميّز" },
@@ -94,34 +85,90 @@ const packagesMenu = [
   { id: "pkg_allergy", title: "خريطة الحساسية" },
   { id: "pkg_digest", title: "خريطة الجهاز الهضمي" },
   { id: "pkg_full", title: "الباقة الجينية الشاملة" },
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "start", title: "ابدأ الآن" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
 
 const packageSubMenu = [
-  { id: "start", title: "ابدأ الآن / تحدث معنا" },
+  { id: "start", title: "ابدأ الآن" },
+  { id: "contact_consultant", title: "تحدث مع مستشار" },
   { id: "back_packages", title: "العودة لقائمة الباقات" },
   { id: "main_menu", title: "العودة للقائمة الرئيسية" }
 ];
 
 const userState = {};
+const supportType = {};
+
+const supportBuffer = {};
+const supportTimer = {};
+const SUPPORT_SILENCE_TIME = 1 * 60 * 1000;
+
+function formatSupportMessage(type, phone, messages) {
+  const time = new Date().toLocaleString("ar-SA");
+  return (
+`📩 طلب دعم جديد – جيناتك
+
+📌 نوع الطلب:
+${type || "غير محدد"}
+
+👤 رقم العميل:
+${phone}
+
+🕒 وقت آخر رسالة:
+${time}
+
+📝 تفاصيل الطلب:
+${messages.join("\n")}`
+  );
+}
+
+async function startSupportTimer(phone) {
+  if (supportTimer[phone]) {
+    clearTimeout(supportTimer[phone]);
+  }
+
+  supportTimer[phone] = setTimeout(async () => {
+    const messages = supportBuffer[phone];
+    if (!messages || messages.length === 0) return;
+
+    const finalMessage = formatSupportMessage(
+      supportType[phone],
+      phone,
+      messages
+    );
+
+    await send({
+      messaging_product: "whatsapp",
+      to: "966536887516",
+      type: "text",
+      text: { body: finalMessage }
+    });
+
+    await sendText(
+      phone,
+`سيتم التواصل معك من قبل فريق الدعم
+شكرًا لاختياركم جيناتك 💙`
+    );
+
+    await sendList(phone, welcomeMenuText, mainMenu);
+
+    delete supportBuffer[phone];
+    delete supportTimer[phone];
+    delete userState[phone];
+    delete supportType[phone];
+  }, SUPPORT_SILENCE_TIME);
+}
+
 
 const lastSelectedPackage = {};
 
 const STATE = {
-  HUMAN_HANDOVER: "HUMAN_HANDOVER",
   WAITING_CALL: "WAITING_CALL",
   WAITING_FEEDBACK: "WAITING_FEEDBACK",
   WAITING_WHATSAPP: "WAITING_WHATSAPP"
 };
 
-
-
-const startMenu = [
-  { id: "start_choose", title: "اختر الباقة المناسبة" },
-  { id: "contact_consultant", title: "تحدث مع مستشار" },
-  { id: "main_menu", title: "القائمة الرئيسية" }
-];
 
 const startPackagesMenu = [
   { id: "buy_pkg_afiya", title: "العافية 360" },
@@ -163,61 +210,21 @@ app.post("/webhook", async (req, res) => {
 
 if (msg.type === "text") {
 
+  if (
+    userState[msg.from] === STATE.WAITING_CALL ||
+    userState[msg.from] === STATE.WAITING_WHATSAPP ||
+    userState[msg.from] === STATE.WAITING_FEEDBACK
+  ) {
+    if (!supportBuffer[msg.from]) {
+      supportBuffer[msg.from] = [];
+    }
 
-if (userState[msg.from] === STATE.WAITING_CALL) {
+    supportBuffer[msg.from].push(msg.text?.body || "");
 
-  await forwardToSupport(
-    msg.from,
-    msg.profile?.name || "غير مذكور",
-    msg.text?.body || "لا يوجد نص"
-  );
+    startSupportTimer(msg.from);
 
-  await sendText(
-    msg.from,
-    "تم استلام طلبك وسيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة"
-  );
-
-  await sendList(msg.from, welcomeMenuText, mainMenu);
-  delete userState[msg.from];
-  return;
-}
-
-if (userState[msg.from] === STATE.WAITING_FEEDBACK) {
-
-  await forwardToSupport(
-    msg.from,
-    msg.profile?.name || "غير مذكور",
-    msg.text?.body || "لا يوجد نص"
-  );
-
-  await sendText(
-    msg.from,
-    "سيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
-  );
-
-  await sendList(msg.from, welcomeMenuText, mainMenu);
-  delete userState[msg.from];
-  return;
-}
-
-
-if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
-
-  await forwardToSupport(
-    msg.from,
-    msg.profile?.name || "غير مذكور",
-    msg.text?.body || "لا يوجد نص"
-  );
-
-  await sendText(
-    msg.from,
-    "يسعدنا سماع استفسارك وسيتم الرد عليك من قبل أحد ممثلي خدمة العملاء"
-  );
-
-  await sendList(msg.from, welcomeMenuText, mainMenu);
-  delete userState[msg.from];
-  return;
-}
+    return;
+  }
 
 
 
@@ -233,12 +240,6 @@ if (userState[msg.from] === STATE.WAITING_WHATSAPP) {
 
   await sendList(msg.from, welcomeMenuText, mainMenu);
   return;
-}
-
-if (
-  msg.type === "interactive" &&
-  userState[msg.from] === STATE.HUMAN_HANDOVER
-) {
 }
 
 
@@ -280,12 +281,13 @@ if (id === "package_details") {
 if (id === "start") {
   await sendList(
     to,
-`يمكنك اختيار الباقة المناسبة من خلال رابط الشراء المباشر
-أو بالتحدث مع مستشار جيناتك للمساعدة`,
-    startMenu
+`يمكنك اختيار الباقة المناسبة من خلال القوائم التالية
+أو التحدث مع مستشار جيناتك للمساعدة`,
+    startPackagesMenu
   );
   return;
 }
+
 
 if (id === "start_choose") {
   await sendList(
@@ -308,37 +310,56 @@ if (id === "contact_consultant") {
 
 if (id === "request_call") {
   userState[to] = STATE.WAITING_CALL;
-  await sendList(
+  supportType[to] = "طلب مكالمة";
+  supportBuffer[to] = [];
+
+  await sendText(
     to,
 `سيتم التواصل معك من قبل مستشار جيناتك خلال 24 ساعة
-فضلاً اكتب اسمك ورقم الهاتف`,
-    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+
+فضلاً زودنا بالآتي:
+
+الاسم:
+رقم الهاتف الخاص بالتواصل:`
   );
   return;
 }
+
+
 
 if (id === "whatsapp_chat") {
   userState[to] = STATE.WAITING_WHATSAPP;
-  await sendList(
+  supportType[to] = "استفسار";
+  supportBuffer[to] = [];
+
+  await sendText(
     to,
-`يسعدنا سماع استفسارك
-وسيتم الرد عليك من قبل أحد ممثلينا`,
-    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+`يسعدنا تواصلك مع فريق جيناتك 💙
+
+فضلاً زودنا بالآتي:
+
+الاسم:
+الاستفسار:`
   );
   return;
 }
 
+
 if (id === "feedback") {
   userState[to] = STATE.WAITING_FEEDBACK;
-  await sendList(
+  supportType[to] = "شكوى / اقتراح";
+  supportBuffer[to] = [];
+
+  await sendText(
     to,
 `يهمنا سماع رأيك
 اكتب رسالتك وسيتم الرد عليك
-من قبل أحد ممثلي خدمة العملاء`,
-    [{ id: "main_menu", title: "القائمة الرئيسية" }]
+من قبل أحد ممثلي خدمة العملاء`
   );
   return;
 }
+
+
 
 if (id.startsWith("buy_pkg_")) {
 
