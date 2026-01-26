@@ -102,26 +102,33 @@ const supportType = {};
 
 const supportBuffer = {};
 const supportTimer = {};
-const SUPPORT_SILENCE_TIME = 1 * 60 * 1000;
+const SUPPORT_SILENCE_TIME = 30 * 1000;
 
 function formatSupportMessage(type, phone, messages) {
   const time = new Date().toLocaleString("ar-SA");
+  const name = messages[0] || "غير مذكور";
+  const content = messages.slice(1).join("\n") || "لا يوجد نص";
+
   return (
 `📩 طلب دعم جديد – جيناتك
 
 📌 نوع الطلب:
 ${type || "غير محدد"}
 
-👤 رقم العميل:
+👤 الاسم:
+${name}
+
+📱 رقم العميل:
 ${phone}
 
 🕒 وقت آخر رسالة:
 ${time}
 
-📝 تفاصيل الطلب:
-${messages.join("\n")}`
+📝 الرسالة:
+${content}`
   );
 }
+
 
 async function startSupportTimer(phone) {
   if (supportTimer[phone]) {
