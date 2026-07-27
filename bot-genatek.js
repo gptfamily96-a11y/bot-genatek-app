@@ -7,6 +7,15 @@ app.use(express.json());
 const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
+const LINKS = {
+  afiya: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%81%D9%8A%D8%A9-%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D9%8A%D8%A9-gene-wellness-360/p1921183372",
+  beauty: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2/p595261876",
+  psych: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B3%D8%AC%D8%A7%D9%85-%D8%A7%D9%84%D9%86%D9%81%D8%B3%D9%8A/p1183924682",
+  allergy: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9-%D9%84%D9%84%D8%AD%D8%B3%D8%A7%D8%B3%D9%8A%D8%A9-allergy-map-pro/p1827824782",
+  digest: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9-%D8%A7%D9%84%D9%87%D8%B6%D9%85%D9%8A%D8%A9-digestive-genetic-code/p302774848",
+  full: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2%D8%A9-genes-premium-package/p1707049615"
+};
+
 async function send(payload) {
   await fetch(API_URL, {
     method: "POST",
@@ -395,32 +404,32 @@ if (id.startsWith("buy_pkg_")) {
   const packageMap = {
     buy_pkg_afiya: {
       name: "العافية 360 – التغذية",
-      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%81%D9%8A%D8%A9-%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D9%8A%D8%A9-gene-wellness-360/p1921183372",
+      link: LINKS.afiya,
       detailsId: "pkg_afiya"
     },
     buy_pkg_beauty: {
       name: "جينات الجمال والتميّز",
-      link: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2/p595261876",
+      link: LINKS.beauty,
       detailsId: "pkg_beauty"
     },
     buy_pkg_psych: {
       name: "جينات الانسجام النفسي",
-      link: "hhttps://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B3%D8%AC%D8%A7%D9%85-%D8%A7%D9%84%D9%86%D9%81%D8%B3%D9%8A/p1183924682",
+       link: LINKS.psych,
       detailsId: "pkg_psych"
     },
     buy_pkg_allergy: {
       name: "خريطة الحساسية",
-      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9-%D9%84%D9%84%D8%AD%D8%B3%D8%A7%D8%B3%D9%8A%D8%A9-allergy-map-pro/p1827824782",
+      link: LINKS.allergy,
       detailsId: "pkg_allergy"
     },
     buy_pkg_digest: {
       name: "خريطة الجهاز الهضمي",
-      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9-%D8%A7%D9%84%D9%87%D8%B6%D9%85%D9%8A%D8%A9-digestive-genetic-code/p302774848",
+      link: LINKS.digest,
       detailsId: "pkg_digest"
     },
     buy_pkg_full: {
       name: "الباقة الجينية الشاملة",
-      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2%D8%A9-genes-premium-package/p1707049615",
+      link: LINKS.full,
       detailsId: "pkg_full"
     }
   };
