@@ -187,7 +187,7 @@ const startPackagesMenu = [
 ];
 
 const contactMenu = [
-  { id: "request_call", title: "طلب مكالمة" },
+
   { id: "whatsapp_chat", title: "تحدث عبر الواتساب" },
   { id: "main_menu", title: "القائمة الرئيسية" }
 ];
@@ -339,7 +339,7 @@ if (id === "contact_consultant") {
 
 if (id === "request_call") {
   userState[to] = STATE.WAITING_CALL;
-  supportType[to] = "طلب مكالمة";
+
   supportBuffer[to] = [];
 
   await sendText(
@@ -395,32 +395,32 @@ if (id.startsWith("buy_pkg_")) {
   const packageMap = {
     buy_pkg_afiya: {
       name: "العافية 360 – التغذية",
-      link: "https://acl.sa/460/packages/16290?type=1",
+      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%81%D9%8A%D8%A9-%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D9%8A%D8%A9-gene-wellness-360/p1921183372",
       detailsId: "pkg_afiya"
     },
     buy_pkg_beauty: {
       name: "جينات الجمال والتميّز",
-      link: "https://acl.sa/460/packages/16292?type=1",
+      link: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2/p595261876",
       detailsId: "pkg_beauty"
     },
     buy_pkg_psych: {
       name: "جينات الانسجام النفسي",
-      link: "https://acl.sa/460/packages/16295?type=1",
+      link: "hhttps://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B3%D8%AC%D8%A7%D9%85-%D8%A7%D9%84%D9%86%D9%81%D8%B3%D9%8A/p1183924682",
       detailsId: "pkg_psych"
     },
     buy_pkg_allergy: {
       name: "خريطة الحساسية",
-      link: "https://acl.sa/460/packages/16296?type=1",
+      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9-%D9%84%D9%84%D8%AD%D8%B3%D8%A7%D8%B3%D9%8A%D8%A9-allergy-map-pro/p1827824782",
       detailsId: "pkg_allergy"
     },
     buy_pkg_digest: {
       name: "خريطة الجهاز الهضمي",
-      link: "https://acl.sa/460/packages/16298?type=1",
+      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9-%D8%A7%D9%84%D9%87%D8%B6%D9%85%D9%8A%D8%A9-digestive-genetic-code/p302774848",
       detailsId: "pkg_digest"
     },
     buy_pkg_full: {
       name: "الباقة الجينية الشاملة",
-      link: "https://acl.sa/460/packages/16300?type=1",
+      link: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2%D8%A9-genes-premium-package/p1707049615",
       detailsId: "pkg_full"
     }
   };
