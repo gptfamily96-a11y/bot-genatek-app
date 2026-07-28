@@ -8,13 +8,14 @@ const API_URL = "https://waba-v2.360dialog.io/messages";
 const API_KEY = process.env.DIALOG360_API_KEY;
 
 const LINKS = {
-  afiya: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%81%D9%8A%D8%A9-%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D9%8A%D8%A9-gene-wellness-360/p1921183372",
-  beauty: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2/p595261876",
-  psych: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B3%D8%AC%D8%A7%D9%85-%D8%A7%D9%84%D9%86%D9%81%D8%B3%D9%8A/p1183924682",
-  allergy: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9-%D9%84%D9%84%D8%AD%D8%B3%D8%A7%D8%B3%D9%8A%D8%A9-allergy-map-pro/p1827824782",
-  digest: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9-%D8%A7%D9%84%D9%87%D8%B6%D9%85%D9%8A%D8%A9-digestive-genetic-code/p302774848",
-  full: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2%D8%A9-genes-premium-package/p1707049615"
+  afiya: "https://bot-genatek-app.onrender.com/go/afiya",
+  beauty: "https://bot-genatek-app.onrender.com/go/beauty",
+  psych: "https://bot-genatek-app.onrender.com/go/psych",
+  allergy: "https://bot-genatek-app.onrender.com/go/allergy",
+  digest: "https://bot-genatek-app.onrender.com/go/digest",
+  full: "https://bot-genatek-app.onrender.com/go/full"
 };
+
 
 async function send(payload) {
   await fetch(API_URL, {
@@ -212,6 +213,26 @@ const buyPackageMenu = [
 app.get("/", (req, res) => {
   res.send("OK");
 });
+
+const REDIRECTS = {
+  afiya: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B9%D8%A7%D9%81%D9%8A%D8%A9-%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D9%8A%D8%A9-gene-wellness-360/p1921183372",
+  beauty: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2/p595261876",
+  psych: "https://genatech-ksa.com/%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%A7%D9%86%D8%B3%D8%AC%D8%A7%D9%85-%D8%A7%D9%84%D9%86%D9%81%D8%B3%D9%8A/p1183924682",
+  allergy: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AE%D8%B1%D9%8A%D8%B7%D8%A9-%D8%A7%D9%84%D9%85%D8%AA%D9%83%D8%A7%D9%85%D9%84%D8%A9-%D9%84%D9%84%D8%AD%D8%B3%D8%A7%D8%B3%D9%8A%D8%A9-allergy-map-pro/p1827824782",
+  digest: "https://genatech-ksa.com/%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9-%D8%A7%D9%84%D9%87%D8%B6%D9%85%D9%8A%D8%A9-digestive-genetic-code/p302774848",
+  full: "https://genatech-ksa.com/%D8%A7%D9%84%D8%AC%D9%8A%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D9%85%D9%8A%D8%B2%D8%A9-genes-premium-package/p1707049615"
+};
+
+app.get("/go/:pkg", (req, res) => {
+  const url = REDIRECTS[req.params.pkg];
+
+  if (!url) {
+    return res.status(404).send("الرابط غير موجود");
+  }
+
+  res.redirect(url);
+});
+
 
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
